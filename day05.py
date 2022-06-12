@@ -30,7 +30,33 @@ def run_program(program: list, x_input, x_outputs):
             x_outputs.append(a)
             pos += 2
 
-        if operation > 4:
+        if operation == 5:
+            a = interpret_nth_param(program, pos, 1)
+            if a != 0:
+                pos = interpret_nth_param(program, pos, 2)
+            else:
+                pos += 3
+
+        if operation == 6:
+            a = interpret_nth_param(program, pos, 1)
+            if a == 0:
+                pos = interpret_nth_param(program, pos, 2)
+            else:
+                pos += 3
+
+        if operation == 7:
+            a = interpret_nth_param(program, pos, 1)
+            b = interpret_nth_param(program, pos, 2)
+            program[program[pos + 3]] = int(a < b)
+            pos += 4
+
+        if operation == 8:
+            a = interpret_nth_param(program, pos, 1)
+            b = interpret_nth_param(program, pos, 2)
+            program[program[pos + 3]] = int(a == b)
+            pos += 4
+
+        if operation > 9:
             raise ValueError
 
     return program
@@ -63,9 +89,11 @@ def part1(data: str):
     return outputs[-1]
 
 
-
 def part2(data: str):
-    return None
+    program = [int(x) for x in data.split(",")]
+    outputs = []
+    run_program(program, 5, outputs)
+    return outputs[-1]
 
 
 def read_data():
