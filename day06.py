@@ -6,7 +6,7 @@ def part1(data: str):
 
     counter = 0
     for start in direct_orbit_map.keys():
-        counter += count_indirect(start, direct_orbit_map)
+        counter += len(get_full_path(start, direct_orbit_map)) - 1
     return counter
 
 
@@ -18,16 +18,6 @@ def parse_direct_orbit_map(data):
         orbit_info = row.split(")")
         direct_orbit_map[orbit_info[1]] = orbit_info[0]
     return direct_orbit_map
-
-
-def count_indirect(start, direct_orbit_map):
-    pointer = start
-    counter = 0
-    while pointer in direct_orbit_map:
-        counter += 1
-        pointer = direct_orbit_map[pointer]
-
-    return counter
 
 
 def get_full_path(start, direct_orbit_map):
