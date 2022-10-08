@@ -12,7 +12,6 @@ def part1(data: str, x_size=25, y_size=6):
     return count_given_number(least_zeros_layer, 1) * count_given_number(least_zeros_layer, 2)
 
 
-
 def read_layers(full_ints, x_size, y_size):
     layers = []
     layer_number = 0
@@ -51,8 +50,33 @@ def init_layer(x_size, y_size):
     return layer
 
 
-def part2(data: str):
-    pass
+def render_layers(layers, x_size, y_size):
+    layer = layers[0]
+    for c in range(1, len(layers)):
+        layer_com = layers[c]
+        for x in range(x_size):
+            for y in range(y_size):
+                if (layer[y][x] == 2):
+                    layer[y][x] = layer_com[y][x]
+
+    return layer
+
+
+def part2(data: str, x_size=25, y_size=6):
+    full_ints = [int(x) for x in data]
+    layers = read_layers(full_ints, x_size, y_size)
+
+    result_layer = render_layers(layers, x_size, y_size)
+    result_text = ""
+    for row in result_layer:
+        for val in row:
+            if val == 1:
+                result_text += "*"
+            else:
+                result_text += " "
+        result_text += "\n"
+
+    return result_text
 
 
 def read_data():

@@ -13,5 +13,11 @@ class AoCTest(unittest.TestCase):
         self.assertEqual(expected, result)
 
 
+    @parameterized.expand([["0222112222120000", " *\n* \n"]])
+    def test_part1(self, data, expected):
+        result = day.part2(data, 2, 2)
+        self.assertEqual(expected, result)
+
+
 if __name__ == '__main__':
     unittest.main()
