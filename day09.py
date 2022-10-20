@@ -1,5 +1,21 @@
 import os
 
+debug_mode = False
+
+
+def print_debug(pos, program: dict):
+    if not debug_mode:
+        return
+
+    max_idx = max(program.keys())
+    non_zero = {}
+    for i in range(max_idx + 1):
+        val = program.get(i)
+        if val is not None and val != 0:
+            non_zero[i] = val
+
+    print("DEBUG:", pos, non_zero)
+
 
 def run_program(input_program: list, x_inputs, x_outputs, stop_on_output=False, pos=0):
     program = {}
@@ -11,6 +27,8 @@ def run_program(input_program: list, x_inputs, x_outputs, stop_on_output=False, 
     while program[pos] != 99:
 
         operation = program[pos] % 100
+
+        print_debug(pos, program)
 
         if operation == 1:
             a = interpret_nth_param(program, pos, 1, relative_base)
@@ -25,7 +43,7 @@ def run_program(input_program: list, x_inputs, x_outputs, stop_on_output=False, 
             pos += 4
 
         if operation == 3:
-            program[program.get(pos + 1)] = x_inputs[input_idx]
+            program[interpret_write_address(program, pos, 1, relative_base)] = x_inputs[input_idx]
             input_idx += 1
             pos += 2
 
@@ -84,6 +102,21 @@ def interpret_nth_param(program: dict, position: int, param_number: int, relativ
 
     if mode == 2:
         return program.get(relative_base + program.get(position + param_number, 0), 0)
+
+    raise ValueError
+
+
+def interpret_write_address(program: dict, position: int, param_number: int, relative_base):
+    mode = mode_for_nth_parameter(program.get(position, 0), param_number)
+
+    if mode == 0:
+        return program.get(position + param_number, 0)
+
+    if mode == 1:
+        return position + param_number
+
+    if mode == 2:
+        return relative_base + program.get(position + param_number, 0)
 
     raise ValueError
 
