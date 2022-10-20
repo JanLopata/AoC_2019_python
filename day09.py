@@ -33,13 +33,13 @@ def run_program(input_program: list, x_inputs, x_outputs, stop_on_output=False, 
         if operation == 1:
             a = interpret_nth_param(program, pos, 1, relative_base)
             b = interpret_nth_param(program, pos, 2, relative_base)
-            program[program.get(pos + 3)] = a + b
+            program[interpret_write_address(program, pos, 3, relative_base)] = a + b
             pos += 4
 
         if operation == 2:
             a = interpret_nth_param(program, pos, 1, relative_base)
             b = interpret_nth_param(program, pos, 2, relative_base)
-            program[program.get(pos + 3)] = a * b
+            program[interpret_write_address(program, pos, 3, relative_base)] = a * b
             pos += 4
 
         if operation == 3:
@@ -71,13 +71,13 @@ def run_program(input_program: list, x_inputs, x_outputs, stop_on_output=False, 
         if operation == 7:
             a = interpret_nth_param(program, pos, 1, relative_base)
             b = interpret_nth_param(program, pos, 2, relative_base)
-            program[program.get(pos + 3)] = int(a < b)
+            program[interpret_write_address(program, pos, 3, relative_base)] = int(a < b)
             pos += 4
 
         if operation == 8:
             a = interpret_nth_param(program, pos, 1, relative_base)
             b = interpret_nth_param(program, pos, 2, relative_base)
-            program[program.get(pos + 3)] = int(a == b)
+            program[interpret_write_address(program, pos, 3, relative_base)] = int(a == b)
             pos += 4
 
         if operation == 9:
@@ -139,6 +139,10 @@ def part1(data: str):
 
 def part2(data: str):
     program = [int(x) for x in data.split(",")]
+    outputs = []
+    program_memory, halting_position = run_program(program, [2], outputs)
+    print(program_memory, halting_position)
+    return outputs
 
 
 def read_data():
