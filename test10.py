@@ -71,9 +71,9 @@ class AoCTest(unittest.TestCase):
             expected = example[0]
             input_data = example[1]
             result = day.part1(input_data)
-            self.assertEqual(expected, result)
+            self.assertEqual(expected, result[0])
 
-        self.assertEqual(210, day.part1(large_data))
+        self.assertEqual(210, day.part1(large_data)[0])
 
     def test_mini(self):
         grid_data, grid_size = day.read_grid_to_set(mini_data)

@@ -1,3 +1,4 @@
+import math
 import os
 
 debug = 0
@@ -32,7 +33,8 @@ def compute_visible_points(origin, grid, grid_size):
             found_points.append(point)
             remove_invisible(grid, grid_size, origin, point)
 
-    print(origin, len(grid), len(found_points))
+    if debug:
+        print(origin, len(grid), len(found_points))
     return len(found_points)
 
 
@@ -76,7 +78,14 @@ def part1(data: str):
         visible_count = compute_visible_points(origin, set(grid_data), grid_size)
         visibility_data[origin] = visible_count
 
-    return max(visibility_data.values())
+    max_origin = None
+    max_val = 0
+    for origin in visibility_data:
+        if visibility_data[origin] > max_val:
+            max_origin = origin
+            max_val = visibility_data[origin]
+
+    return max_val, max_origin
 
 
 def read_grid_to_set(data):
@@ -96,7 +105,43 @@ def read_grid_to_set(data):
 
 
 def part2(data):
-    return 0
+    _, origin = part1(data)
+    grid_data, grid_size = read_grid_to_set(data)
+    grid_data.remove(origin)
+
+    destroyed = []
+    sorted_points = sort_points_for_laser(grid_data, origin)
+    while True:
+
+        skip_angle = -4
+        if len(destroyed) >= 200:
+            break
+
+        i = 0
+        while i < len(sorted_points):
+
+            point_wa = sorted_points[i]
+            i += 1
+            if point_wa[1] <= skip_angle:
+                continue
+
+            destroyed.append(point_wa[0])
+            skip_angle = point_wa[1]
+            if len(destroyed) >= 200:
+                break
+
+    last = destroyed[-1]
+    return last[1] * 100 + last[0]
+
+
+def sort_points_for_laser(grid_data, origin):
+    sorted_points = []
+    for point in grid_data:
+        delta = (point[0] - origin[0], point[1] - origin[1])
+        # clock-wise
+        theta = - math.atan2(delta[1], delta[0])
+        sorted_points.append((point, theta, delta[0] ** 2 + delta[1] ** 2))
+    return sorted(sorted_points, key=lambda x: (x[1], x[2]))
 
 
 def read_data():
