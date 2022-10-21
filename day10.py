@@ -95,8 +95,8 @@ def read_grid_to_set(data):
     return grid_data, row_counter
 
 
-def part2():
-    pass
+def part2(data):
+    return 0
 
 
 def read_data():
