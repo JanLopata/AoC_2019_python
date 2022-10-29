@@ -25,6 +25,9 @@ class IntcodeComputer:
         for i in range(len(input_program)):
             self.program[i] = input_program[i]
 
+    def set_stop_on_output(self, value: bool):
+        self.stop_on_output = value
+
     def accept_input(self, added_input: list):
         for val in added_input:
             self.input.append(val)
