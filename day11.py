@@ -11,7 +11,7 @@ class PaintingRobot:
         self.directions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
         self.position = (0, 0)
         self.environment = set()
-        self.painted = set()
+        self.visited = set()
 
     def move(self):
         direction = self.get_direction()
@@ -39,23 +39,13 @@ class PaintingRobot:
         if color_number == 0 and self.position in self.environment:
             self.environment.remove(self.position)
 
-        self.painted.add(self.position)
+        self.visited.add(self.position)
 
     def get_color_number(self):
         return 1 if self.position in self.environment else 0
 
 
-def part1(data: str):
-    program = [int(x) for x in data.split(",")]
-    computer = IntcodeComputer()
-    computer.import_program(program)
-    computer.set_stop_on_output(True)
-    # this encapsulation is bad
-    # - the intcode computer should be inside of robot
-    # - the environment should be outside of robot
-    robot = PaintingRobot()
-    partial_output = []
-
+def run_robot(computer, partial_output, robot):
     stopping_condition = None
     while stopping_condition != StoppingCondition.END_OF_PROGRAM:
 
@@ -73,13 +63,52 @@ def part1(data: str):
                 robot.move()
                 partial_output.clear()
 
-    return len(robot.painted)
 
-
-def part2(data: str):
-    program = [int(x) for x in data.split(",")]
+def init_robot(input_program):
+    program = [int(x) for x in input_program.split(",")]
     computer = IntcodeComputer()
     computer.import_program(program)
+    computer.set_stop_on_output(True)
+    # this encapsulation is bad
+    # - the intcode computer should be inside of robot
+    # - the environment should be outside of robot
+    robot = PaintingRobot()
+    return computer, robot
+
+
+def max_size(tuples_list: list):
+    return max(abs(x) for sub_tuple in tuples_list for x in sub_tuple)
+
+
+def print_environment(environment):
+    max_range = max_size(environment)
+    result = ""
+    for i in range(-max_range, max_range):
+        for j in range(-max_range, max_range):
+            c = 'X' if (j, i) in environment else ' '
+            result += c
+        result += "\n"
+
+    print(result)
+
+
+def part1(input_program: str):
+    computer, robot = init_robot(input_program)
+    partial_output = []
+
+    run_robot(computer, partial_output, robot)
+
+    return len(robot.visited)
+
+
+def part2(input_program: str):
+    computer, robot = init_robot(input_program)
+    robot.environment.add((0, 0))
+    partial_output = []
+
+    run_robot(computer, partial_output, robot)
+
+    print_environment(robot.environment)
 
 
 def read_data():

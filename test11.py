@@ -10,7 +10,16 @@ test_data_part1 = """
 """
 
 
+def max_size(data: list):
+    return max(abs(x) for sublist in data for x in sublist)
+
+
 class AoCTest(unittest.TestCase):
+
+    def test_max_size(self):
+        data = [(-20, 4), (-24, 12), (21, 6), (0, 7), (-3, -4)]
+        self.assertEqual(24, max_size(data))
+
     def test_part1(self):
         for line in test_data_part1.splitlines():
             if line == "":
