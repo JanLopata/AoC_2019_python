@@ -1,148 +1,26 @@
 import os
 
-debug_mode = False
-
-
-def print_debug(pos, program: dict):
-    if not debug_mode:
-        return
-
-    max_idx = max(program.keys())
-    non_zero = {}
-    for i in range(max_idx + 1):
-        val = program.get(i)
-        if val is not None and val != 0:
-            non_zero[i] = val
-
-    print("DEBUG:", pos, non_zero)
-
-
-def run_program(input_program: list, x_inputs, x_outputs, stop_on_output=False, pos=0):
-    program = {}
-    for i in range(len(input_program)):
-        program[i] = input_program[i]
-    input_idx = 0
-    relative_base = 0
-
-    while program[pos] != 99:
-
-        operation = program[pos] % 100
-
-        print_debug(pos, program)
-
-        if operation == 1:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            b = interpret_nth_param(program, pos, 2, relative_base)
-            program[interpret_write_address(program, pos, 3, relative_base)] = a + b
-            pos += 4
-
-        if operation == 2:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            b = interpret_nth_param(program, pos, 2, relative_base)
-            program[interpret_write_address(program, pos, 3, relative_base)] = a * b
-            pos += 4
-
-        if operation == 3:
-            program[interpret_write_address(program, pos, 1, relative_base)] = x_inputs[input_idx]
-            input_idx += 1
-            pos += 2
-
-        if operation == 4:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            x_outputs.append(a)
-            pos += 2
-            if stop_on_output:
-                return program, pos
-
-        if operation == 5:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            if a != 0:
-                pos = interpret_nth_param(program, pos, 2, relative_base)
-            else:
-                pos += 3
-
-        if operation == 6:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            if a == 0:
-                pos = interpret_nth_param(program, pos, 2, relative_base)
-            else:
-                pos += 3
-
-        if operation == 7:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            b = interpret_nth_param(program, pos, 2, relative_base)
-            program[interpret_write_address(program, pos, 3, relative_base)] = int(a < b)
-            pos += 4
-
-        if operation == 8:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            b = interpret_nth_param(program, pos, 2, relative_base)
-            program[interpret_write_address(program, pos, 3, relative_base)] = int(a == b)
-            pos += 4
-
-        if operation == 9:
-            a = interpret_nth_param(program, pos, 1, relative_base)
-            relative_base += a
-            pos += 2
-
-        if operation > 9:
-            raise ValueError
-
-    return program, pos
-
-
-def interpret_nth_param(program: dict, position: int, param_number: int, relative_base):
-    mode = mode_for_nth_parameter(program.get(position, 0), param_number)
-
-    if mode == 0:
-        return program.get(program.get(position + param_number, 0), 0)
-
-    if mode == 1:
-        return program.get(position + param_number, 0)
-
-    if mode == 2:
-        return program.get(relative_base + program.get(position + param_number, 0), 0)
-
-    raise ValueError
-
-
-def interpret_write_address(program: dict, position: int, param_number: int, relative_base):
-    mode = mode_for_nth_parameter(program.get(position, 0), param_number)
-
-    if mode == 0:
-        return program.get(position + param_number, 0)
-
-    if mode == 1:
-        return position + param_number
-
-    if mode == 2:
-        return relative_base + program.get(position + param_number, 0)
-
-    raise ValueError
-
-
-def mode_for_nth_parameter(code, n):
-    code = code // 100
-    divisor = 1
-    for i in range(n - 1):
-        divisor *= 10
-    return code // divisor % 10
+from IntcodeComputer import IntcodeComputer
 
 
 def part1(data: str):
     program = [int(x) for x in data.split(",")]
-    outputs = []
-    program_memory, halting_position = run_program(program, [1], outputs)
-    print(program_memory, halting_position)
-    return outputs
+    computer = IntcodeComputer()
+    computer.import_program(program)
+    computer.accept_input([1])
+    print(computer.compute_while_possible())
+    print(computer.program, computer.position)
+    return computer.output
 
 
 def part2(data: str):
     program = [int(x) for x in data.split(",")]
-    outputs = []
-    program_memory, halting_position = run_program(program, [2], outputs)
-    print(program_memory, halting_position)
-    return outputs
+    computer = IntcodeComputer()
+    computer.import_program(program)
+    computer.accept_input([2])
+    print(computer.compute_while_possible())
+    print(computer.program, computer.position)
+    return computer.output
 
 
 def read_data():
