@@ -1,7 +1,9 @@
 import os
 import re
+from copy import deepcopy
 
 import numpy as np
+from numpy import lcm
 
 debug_mode = False
 
@@ -45,7 +47,7 @@ def print_situation(step: int, bodies: list):
 
 
 def parse_body(line):
-    pattern = re.compile("<.*=([-\d]*),.*=([-\d]*),.*=([-\d]*)>")
+    pattern = re.compile("<.*=([-\\d]*),.*=([-\\d]*),.*=([-\\d]*)>")
 
     match = pattern.match(line)
     return HeavenBody([int(x) for x in match.groups()])
@@ -88,9 +90,60 @@ def parse_bodies(data):
     return bodies
 
 
-def part2(input_program: str):
-    lines = data.split("\n")
-    return
+def find_full_cycle(bodies):
+    dimensions_to_check = [x for x in range(3)]
+
+    cycles_found = []
+    target = [deepcopy(body) for body in bodies]
+
+    step = 0
+    while len(dimensions_to_check) > 0:
+
+        simulate_one_step(bodies)
+        step += 1
+        if debug_mode and step % 1000 == 0:
+            print("Step {}".format(step))
+        to_remove = []
+        for dim in dimensions_to_check:
+
+            if all_bodies_match_in_given_dimension(bodies, dim, target):
+                # cycle found
+                print("found cycle for dim {} in {} steps".format(dim, step))
+                to_remove.append(dim)
+
+        for r in to_remove:
+            dimensions_to_check.remove(r)
+            cycles_found.append(step)
+
+    return lcm_on_array(cycles_found)
+
+
+def lcm_on_array(values: np.array):
+    lcm_work = 1
+    for steps in values:
+        lcm_work = lcm(steps, lcm_work)
+    return lcm_work
+
+
+def position_match(body1, body2, dimension):
+    return body1.position[dimension] == body2.position[dimension]
+
+
+def velocity_match(body1, body2, dimension):
+    return body1.velocity[dimension] == body2.velocity[dimension]
+
+
+def is_match(body1, body2, dimension):
+    return position_match(body1, body2, dimension) and velocity_match(body1, body2, dimension)
+
+
+def all_bodies_match_in_given_dimension(bodies, dimension, target):
+    return all(is_match(bodies[i], target[i], dimension) for i in range(len(bodies)))
+
+
+def part2(data: str):
+    bodies = parse_bodies(data)
+    return find_full_cycle(bodies)
 
 
 def read_data():
