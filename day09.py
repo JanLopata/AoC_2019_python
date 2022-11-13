@@ -1,6 +1,6 @@
 import os
 
-from IntcodeComputer import IntcodeComputer
+from intcode_computer import IntcodeComputer
 
 
 def part1(data: str):

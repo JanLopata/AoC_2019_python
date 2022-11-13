@@ -1,6 +1,6 @@
 import os
 
-from IntcodeComputer import IntcodeComputer, StoppingCondition
+from intcode_computer import IntcodeComputer, StoppingCondition
 
 
 class PaintingRobot:

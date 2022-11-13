@@ -33,7 +33,5 @@ class AoCTest(unittest.TestCase):
         self.assertEqual(4686774924, result)
 
 
-
-
 if __name__ == '__main__':
     unittest.main()
