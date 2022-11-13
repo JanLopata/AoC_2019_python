@@ -32,6 +32,9 @@ class IntcodeComputer:
         for val in added_input:
             self.input.append(val)
 
+    def reset_output(self):
+        self.output = []
+
     def interpret_nth_param(self, param_number: int):
         mode = mode_for_nth_parameter(self.program.get(self.position, 0), param_number)
 
