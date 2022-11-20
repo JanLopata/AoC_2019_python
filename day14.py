@@ -11,9 +11,14 @@ def part2(data: str):
     pass
 
 
+def read_cookie_from_file():
+    with open("input/cookie.txt") as cookie_file:
+        return cookie_file.read().strip()
+
+
 def download_data(day_number, input_filename):
     url = f"https://adventofcode.com/2019/day/{day_number}/input"
-    cookies = {"session": os.environ["AOC_SESSION"]}
+    cookies = {"session": read_cookie_from_file()}
     print(cookies)
     print(url)
 
