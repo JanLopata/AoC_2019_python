@@ -3,7 +3,8 @@ import os
 
 from aoc_tools import get_data
 
-debug_mode = True
+debug_part1 = False
+debug_part2 = True
 
 
 def parse_recipe(line):
@@ -35,7 +36,7 @@ def process_requirements(recipes, requirements):
         for recipe in recipes:
             multiplier, new_requirements = recipe_applied(recipe, req)
             if new_requirements is not None:
-                if debug_mode:
+                if debug_part1:
                     print("Recipe {} applied on requirement {} with result {}"
                           .format(recipe, req, new_requirements))
                 requirements[req.name].add_amount(- multiplier * recipe.output.amount)
@@ -55,16 +56,60 @@ def positive_requirements_present(requirements):
 
 
 def part1(data: str):
-    recipes = []
-    requirements = {"FUEL": Chem("1 FUEL"), "ORE": Chem("0 ORE")}
+    recipes = load_recipes(data)
+    fuel_amount_requirement = 1
+    return compute_ore_requirements(fuel_amount_requirement, recipes)
 
+
+def part2(data: str):
+    recipes = load_recipes(data)
+    target = 1000000000000
+
+    guess = 1
+    lower_guess = 0
+    upper_guess = guess
+    stop_up = False
+
+    # binary search
+    while True:
+        lower = compute_ore_requirements(guess, recipes)
+        upper = compute_ore_requirements(guess + 1, recipes)
+
+        if debug_part2:
+            print("For guess {} have {} - lower: {}, upper: {}".format(guess, lower > target, lower, upper))
+        if lower < target < upper:
+            return guess
+
+        if lower > target:
+            stop_up = True
+            upper_guess = guess
+            guess = math.floor(guess - (guess - lower_guess) * 0.5)
+            if debug_part2:
+                print("Lowering guess {} -> {}".format(upper_guess, guess))
+
+        if upper < target:
+            lower_guess = guess
+            if stop_up:
+                guess = math.floor(guess + (upper_guess - guess) * 0.5)
+            else:
+                guess = guess * 2
+            if debug_part2:
+                print("Raising guess {} -> {}".format(lower_guess, guess))
+
+
+def load_recipes(data):
+    recipes = []
     for line in data.split("\n"):
         if line == "":
             continue
         recipes.append(parse_recipe(line))
+    return recipes
 
+
+def compute_ore_requirements(fuel_amount_requirement, recipes):
+    requirements = {"FUEL": Chem(str(fuel_amount_requirement) + " FUEL"), "ORE": Chem("0 ORE")}
     while positive_requirements_present(requirements):
-        if debug_mode:
+        if debug_part1:
             print("Requirements: {}".format(requirements))
         new_requirements = process_requirements(recipes, requirements)
 
@@ -73,12 +118,7 @@ def part1(data: str):
                 requirements.get(nr.name).add(nr)
             else:
                 requirements[nr.name] = nr
-
     return requirements["ORE"].amount
-
-
-def part2(data: str):
-    pass
 
 
 class Chem:
