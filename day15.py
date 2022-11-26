@@ -4,13 +4,11 @@ from aoc_tools import get_data
 from intcode_computer import IntcodeComputer
 
 dirs = {1: (0, -1), 2: (0, 1), 3: (-1, 0), 4: (1, 0)}
-dirs_set = {1, 2, 3, 4}
-inverse_directions = {1: 2, 2: 1, 3: 4, 4: 3}
 
-debug_mode_bfs = True
-debug_mode_graph = True
+debug_mode_bfs = False
+debug_mode_graph = False
 debug_mode_queue = False
-debug_mode_bot = True
+debug_mode_bot = False
 
 
 def all_directions_covered(direction_covered):
@@ -24,14 +22,21 @@ def part1(data: str):
     computer.compute_while_possible()
 
     bot = Bot(computer)
-    return bot.run()
+    return bot.run()[0]
 
 
 def part2(data: str):
-    pass
+    program = [int(x) for x in data.split(",")]
+    computer = IntcodeComputer()
+    computer.import_program(program)
+    computer.compute_while_possible()
+
+    bot = Bot(computer)
+    bfs = bot.run()[1]
+    return max([len(path) for path in bfs.found_with_path.values()]) - 1
 
 
-def is_covered(position, graph):
+def is_fully_explored(position, graph):
     return position in graph and len(graph[position]) == 4
 
 
@@ -46,19 +51,24 @@ class Bot:
         while True:
             exploration_position, path = self.find_position_to_explore()
             if path is None:
-                print("End of exploration")
+                if debug_mode_bot:
+                    print("End of exploration")
                 break
             self.travel_to_position(path)
             self.explore()
 
         bfs = BFS(self.maze, self.maze.finish)
         p, path = bfs.search(lambda pos, graph: pos == (0, 0))
-        print("Result path to {}: {}".format(p, path))
-        return len(path) - 1
+
+        bfs = BFS(self.maze, self.maze.finish)
+        bfs.search(lambda x1, x2: False)
+        if debug_mode_bot:
+            print("Result path to {}: {}".format(p, path))
+        return len(path) - 1, bfs
 
     def find_position_to_explore(self):
         bfs = BFS(self.maze, self.position)
-        return bfs.search(lambda pos, graph: not is_covered(pos, graph))
+        return bfs.search(lambda pos, graph: not is_fully_explored(pos, graph))
 
     def travel_to_position(self, path):
         if debug_mode_bot:
@@ -98,8 +108,8 @@ class Bot:
         if debug_mode_bot:
             print("Bot: moved to {}".format(self.position))
 
-            if first_code == 2:
-                self.maze.set_finish(target)
+        if first_code == 2:
+            self.maze.set_finish(target)
 
 
 class Maze:
@@ -152,20 +162,20 @@ class BFS:
         self.maze = maze
         self.start = position
         self.queue = VisitQueue(position)
+        self.found_with_path = {}
 
     def search(self, condition):
-        found_with_path = {}
         while not self.queue.is_empty():
             candidate = self.queue.pop_first()
             position = candidate[0].position
             path = candidate[1] + [candidate[0].direction_idx]
-            found_with_path[position] = path
+            self.found_with_path[position] = path
 
             if position in self.maze.walls:
                 continue
 
             if condition(position, self.maze.graph):
-                return position, found_with_path[position]
+                return position, self.found_with_path[position]
 
             # expand new queue elements
             for direction_idx in dirs:
