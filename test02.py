@@ -5,13 +5,18 @@ from parameterized import parameterized
 import day02 as day
 
 
+test_data = """
+A Y
+B X
+C Z
+"""
 class AoCTest(unittest.TestCase):
 
-    @parameterized.expand([["1,9,10,3,2,3,11,0,99,30,40,50", "3500,9,10,70,2,3,11,0,99,30,40,50"]])
-    def test_fuel_req(self, program, expected):
-        program_input = [int(x) for x in program.split(",")]
-        program_result = ','.join([str(x) for x in day.run_program(program_input)])
-        self.assertEqual(expected, program_result)
+    def test_fuel_req(self):
+        self.assertEqual(15, day.part1(test_data))
+
+    def test_fuel_req2(self):
+        self.assertEqual(12, day.part2(test_data))
 
 
 if __name__ == '__main__':
