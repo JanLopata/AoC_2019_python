@@ -1,41 +1,33 @@
 import os
 
-
-def compute_fuel_req(mass: int):
-    return int(mass / 3) - 2
+from aoc_tools import get_data
 
 
-def compute_combined_fuel_req(mass):
-    result = 0
-    increment = compute_fuel_req(mass)
-    while increment > 0:
-        result += increment
-        increment = compute_fuel_req(increment)
-    return result
+def part1(data: str):
+    return max(count_calories(data))
 
 
-def part1():
-    with open(input_filename) as input_file:
-        result = 0
-        for line in input_file:
-            result += compute_fuel_req(int(line))
+def count_calories(data):
+    elfs = data.split("\n\n")
+    # sum calories for every elf
+    calories = []
+    for elf in elfs:
+        cal = 0
+        for line in elf.split("\n"):
+            if line == "":
+                continue
+            cal += int(line)
+        calories.append(cal)
+    return calories
 
-        print(result)
 
-
-def part2():
-    with open(input_filename) as input_file:
-        result = 0
-        for line in input_file:
-            result += compute_combined_fuel_req(int(line))
-
-        print(result)
+def part2(data: str):
+    calories = count_calories(data)
+    return sum(sorted(calories)[-3:])
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    # print(input_filename)
+    data = get_data(os.path.basename(__file__))
 
-    part1()
-    part2()
+    print(part1(data))
+    print(part2(data))

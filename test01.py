@@ -3,18 +3,33 @@ import unittest
 # from nose.tools import assert_equal
 from parameterized import parameterized
 
-import day01
+import day01 as day
+
+test_data = """
+1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000
+"""
 
 
 class AoCTest(unittest.TestCase):
 
-    @parameterized.expand([[12, 2], [14, 2], [1969, 654], [100756, 33583]])
-    def test_fuel_req(self, mass, expected):
-        self.assertEqual(expected, day01.compute_fuel_req(mass))
+    def test_part1(self):
+        self.assertEqual(24000, day.part1(test_data))
 
-    @parameterized.expand([[14, 2], [1969, 966], [100756, 50346]])
-    def test_combined_fuel_req(self, mass, expected):
-        self.assertEqual(expected, day01.compute_combined_fuel_req(mass))
+    def test_part2(self):
+        self.assertEqual(45000, day.part2(test_data))
 
 
 if __name__ == '__main__':
