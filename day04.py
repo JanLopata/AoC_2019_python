@@ -3,64 +3,66 @@ import os
 from aoc_tools import get_data
 
 
+def parse_interval(second_half):
+    sp = second_half.split("-")
+    return int(sp[0]), int(sp[1])
+
+
+def parse_line(line):
+    line_split = line.split(",")
+    first_half = line_split[0]
+    second_half = line_split[1]
+
+    return parse_interval(first_half), parse_interval(second_half)
+
+
+def is_inside(d):
+    if d[0][1] - d[0][0] > d[1][1] - d[1][0]:
+        longer = 0
+        shorter = 1
+    else:
+        longer = 1
+        shorter = 0
+
+    if d[longer][0] <= d[shorter][0] and d[longer][1] >= d[shorter][1]:
+        return True
+    else:
+        return False
+
+
+def some_overlap(d):
+    if d[0][0] < d[1][0]:
+        first = 0
+        second = 1
+    else:
+        first = 1
+        second = 0
+
+    return d[first][1] >= d[second][0]
+
+
 def part1(data: str):
     lines = data.split("\n")
 
-    value_sum = 0
-
-    for line in lines:
-        if line == "":
-            continue
-
-        # half of the line
-        half = len(line) // 2
-        first_half = line[:half]
-        second_half = line[half:]
-        first_set = set([x for x in first_half])
-        second_set = set([x for x in second_half])
-
-        intsec = first_set.intersection(second_set)
-        ch = intsec.pop()
-        value_sum += get_character_value(ch)
-
-    return value_sum
+    parsed = parse_input(lines)
+    return len([d for d in parsed if is_inside(d)])
 
 
 def part2(data: str):
     lines = data.split("\n")
-    found = set()
 
-    value_sum = 0
-    counter = 0
+    parsed = parse_input(lines)
+    return len([d for d in parsed if some_overlap(d)])
 
+
+def parse_input(lines):
+    parsed = []
     for line in lines:
-
         if line == "":
             continue
 
-        counter += 1
-
-        if counter == 1:
-            found = set([x for x in line])
-        else:
-            found = found.intersection(set([x for x in line]))
-
-        if counter == 3:
-            counter = 0
-            ch = found.pop()
-            value = get_character_value(ch)
-
-            value_sum += value
-
-    return value_sum
-
-
-def get_character_value(ch):
-    if ch.isupper():
-        value = ord(ch) - ord('A') + 1 + 26
-    else:
-        value = ord(ch) - ord('a') + 1
-    return value
+        parsed.append(parse_line(line))
+    return parsed
 
 
 if __name__ == "__main__":
