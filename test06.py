@@ -1,5 +1,7 @@
 import unittest
 
+from parameterized import parameterized
+
 import day06 as day
 
 test_data = """
@@ -8,11 +10,27 @@ test_data = """
 
 class AoCTest(unittest.TestCase):
 
-    def test_part1(self):
-        self.assertEqual(1, day.part1(test_data))
+    @parameterized.expand([
+        ["mjqjpqmgbljsphdztnvjfqwrcgsmlb", 7],
+        ["bvwbjplbgvbhsrlpgdmjqwftvncz", 5],
+        ["nppdvjthqldpwncqszvftbrmjlhg", 6],
+        ["nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 10],
+        ["zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 11],
+    ])
+    def test_part1(self, data, expected):
+        result = day.part1(data)
+        self.assertEqual(expected, result)
 
-    def test_part2(self):
-        self.assertEqual(2, day.part2(test_data))
+    @parameterized.expand([
+        ["mjqjpqmgbljsphdztnvjfqwrcgsmlb", 19],
+        ["bvwbjplbgvbhsrlpgdmjqwftvncz", 23],
+        ["nppdvjthqldpwncqszvftbrmjlhg", 23],
+        ["nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 29],
+        ["zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 26],
+    ])
+    def test_part2(self, data, expected):
+        result = day.part2(data)
+        self.assertEqual(expected, result)
 
 
 if __name__ == '__main__':
