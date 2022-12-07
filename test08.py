@@ -4,19 +4,24 @@ from parameterized import parameterized
 
 import day08 as day
 
+test_data = """
+"""
+
 
 class AoCTest(unittest.TestCase):
 
-    @parameterized.expand([["123456789012", 1]])
-    def test_part1(self, data, expected):
-        result = day.part1(data, 3, 2)
+    def test_part1(self):
+        self.assertEqual(-1, day.part1(test_data))
+
+    @parameterized.expand([
+        ["1234", 1],
+    ])
+    def test_parametrized_part1(self, data, expected):
+        result = day.part1(data)
         self.assertEqual(expected, result)
 
-
-    @parameterized.expand([["0222112222120000", " *\n* \n"]])
-    def test_part1(self, data, expected):
-        result = day.part2(data, 2, 2)
-        self.assertEqual(expected, result)
+    def test_part2(self):
+        self.assertEqual(-1, day.part2(test_data))
 
 
 if __name__ == '__main__':
