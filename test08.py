@@ -5,23 +5,21 @@ from parameterized import parameterized
 import day08 as day
 
 test_data = """
+30373
+25512
+65332
+33549
+35390
 """
 
 
 class AoCTest(unittest.TestCase):
 
     def test_part1(self):
-        self.assertEqual(-1, day.part1(test_data))
-
-    @parameterized.expand([
-        ["1234", 1],
-    ])
-    def test_parametrized_part1(self, data, expected):
-        result = day.part1(data)
-        self.assertEqual(expected, result)
+        self.assertEqual(21, day.part1(test_data))
 
     def test_part2(self):
-        self.assertEqual(-1, day.part2(test_data))
+        self.assertEqual(8, day.part2(test_data))
 
 
 if __name__ == '__main__':
