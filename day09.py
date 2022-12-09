@@ -1,55 +1,39 @@
-import math
 import os
+
+import numpy as np
+import numpy.linalg.linalg
 
 from aoc_tools import get_data
 
 directions = {
-    'U': (0, -1),
-    'D': (0, 1),
-    'L': (-1, 0),
-    'R': (1, 0),
+    'U': np.array([0, -1]),
+    'D': np.array([0, 1]),
+    'L': np.array([-1, 0]),
+    'R': np.array([1, 0]),
 }
 
-PRINT_SIZE = 14
+PRINT_SIZE = 15
 debug_print = False
 
 
-def simulate(head, tail, delta_x, delta_y):
-    head = (head[0] + int(delta_x), head[1] + int(delta_y))
+def simulate(head, tail, delta):
+    head = head + delta
 
     # distance between head and tail
-    dist_x = head[0] - tail[0]
-    dist_y = head[1] - tail[1]
-    dist2 = dist_x ** 2 + dist_y ** 2
-    if dist2 >= 4:
-        # move tail
-        if dist_x * dist_y == 0:
-            # head is on the same line as tail
-            if dist_x == 0:
-                # head is on the same vertical line as tail
-                tail = (tail[0], tail[1] + int(math.copysign(1, dist_y)))
-            else:
-                # head is on the same horizontal line as tail
-                tail = (tail[0] + int(math.copysign(1, dist_x)), tail[1])
-
-        else:
-            # head is on the diagonal line
-            tail = (tail[0] + math.copysign(1, dist_x), tail[1] + math.copysign(1, dist_y))
+    diff = tail - head
+    if np.linalg.norm(diff) >= 2:
+        # move tail towards head
+        tail = tail - np.sign(diff)
 
     return head, tail
-
-
-def compute_delta(point1, point2):
-    return int(point1[0] - point2[0]), int(point1[1] - point2[1])
 
 
 def part1(data: str):
     lines = data.split("\n")
 
-    head = (0, 0)
-    tail = (0, 0)
+    head = np.array([0, 0])
+    tail = np.array([0, 0])
     visits = set()
-    visits.add(tail)
 
     for line in lines:
         if line == "":
@@ -60,8 +44,8 @@ def part1(data: str):
 
         for _ in range(count):
             delta = directions[direction]
-            head, tail = simulate(head, tail, delta[0], delta[1])
-            visits.add(tail)
+            head, tail = simulate(head, tail, delta)
+            visits.add(tuple(tail))
 
     return len(visits)
 
@@ -87,7 +71,7 @@ def print_situation(knots, size):
 def part2(data: str):
     lines = data.split("\n")
 
-    knots = [(0, 0)] * 10
+    knots = [np.array([0, 0])] * 10
     visits = set()
     if debug_print:
         print_situation(knots, PRINT_SIZE)
@@ -105,16 +89,16 @@ def part2(data: str):
             for i in range(len(knots) - 1):
                 head = knots[i]
                 tail = knots[i + 1]
-                head, tail = simulate(head, tail, delta[0], delta[1])
-                delta = compute_delta(tail, knots[i + 1])
+                head, tail = simulate(head, tail, delta)
+                delta = tail - knots[i + 1]
                 knots[i] = head
                 # do not move the tail, it will be moved by the next call of simulate
-                if delta == (0, 0):
+                if np.linalg.norm(delta) == 0:
                     break
 
             # move the tail last time
-            knots[-1] = (knots[-1][0] + delta[0], knots[-1][1] + delta[1])
-            visits.add(knots[-1])
+            knots[-1] = knots[-1] + delta
+            visits.add(tuple(knots[-1]))
 
         if debug_print:
             print_situation(knots, PRINT_SIZE)
