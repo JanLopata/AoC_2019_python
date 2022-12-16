@@ -1,115 +1,129 @@
 import os
 
-from intcode_computer import IntcodeComputer
-
-debug_mode = False
+from aoc_tools import get_data
 
 
-def interpret_screen(output, screen_map: dict):
-    for i in range(int(len(output) / 3)):
-        x = output[3 * i]
-        y = output[3 * i + 1]
-        tile_id = output[3 * i + 2]
-        screen_map[(x, y)] = tile_id
-        if tile_id == 0:
-            screen_map.pop((x, y))
-
-    return screen_map
-
-
-def print_screen(screen_map: dict):
-    if not debug_mode:
-        return
-    output = ""
-    for i in range(24):
-        for j in range(50):
-            if (j, i) in screen_map:
-                output += str(screen_map[(j, i)])
-            else:
-                output += ' '
-
-        output += '\n'
-    score = get_score(screen_map)
-
-    print(output)
-    print('Score: {}'.format(score))
+def read_bracket_or_number(text, idx, depth):
+    if text[idx] == "[":
+        return "[", depth + 1, idx + 1
+    elif text[idx] == "]":
+        return "]", depth - 1, idx + 1
+    elif text[idx] == ",":
+        return ",", depth, idx + 1
+    elif text[idx:] == "":
+        return "", depth, idx + 1
+    else:
+        sp = text[idx:].split(",")
+        number_str = sp[0]
+        number_str = number_str.replace("]", "")
+        if not number_str.isnumeric():
+            print("ERROR", number_str)
+        return int(number_str), depth, idx + len(number_str) + int(len(sp) > 1)
 
 
-def get_score(screen_map):
-    return screen_map.get((-1, 0))
+def in_right_order(left, right):
+    print(left, right)
+
+    if type(left) == int and type(right) == int:
+        if left == right:
+            return 0
+        return -1 if left < right else 1
+
+    if type(left) == int:
+        return in_right_order([left], right)
+
+    if type(right) == int:
+        return in_right_order(left, [right])
+
+    for i in range(len(left)):
+        if len(right) <= i:
+            return 1
+        comparison = in_right_order(left[i], right[i])
+        if comparison != 0:
+            return comparison
+
+    if len(right) < len(left):
+        return -1
+
+    return 0
+
+
+def parse_line(line):
+    idx = 0
+    depth = 0
+    stack = [[]]
+    node = []
+
+    while idx < len(line):
+        reading, depth, idx = read_bracket_or_number(line, idx, depth)
+        if reading == "[":
+            new_node = []
+            node.append(new_node)
+            node = new_node
+            stack.append(node)
+        elif reading == "]":
+            # stack[-2].append(node)
+            node = stack.pop()
+        elif reading == ",":
+            pass
+        else:
+            node.append(reading)
+
+    return stack[0]
+
+
+def parse_recursively(line, node):
+    depth = 0
+    reading, depth, idx = read_bracket_or_number(line, 0, depth)
+
+
+def parse_eval(line):
+    chars = set([x for x in line])
+    chars.add("[")
+    chars.add("]")
+    chars.add(",")
+    for i in range(10):
+        chars.add(str(i))
+
+    if len(chars) > 13:
+        print("ERROR", chars)
+        raise Exception("ERROR")
+
+    return eval(line)
+
+
+def parse_block(block):
+    lines = block.split("\n")
+    if lines[0] == "":
+        lines = lines[1:]
+
+    left = parse_eval(lines[0])
+    right = parse_eval(lines[1])
+    return left, right
 
 
 def part1(data: str):
-    program = [int(x) for x in data.split(",")]
-    computer = IntcodeComputer()
-    computer.import_program(program)
-    screen_map = {}
-    computer.compute_while_possible()
-    interpret_screen(computer.output, screen_map)
-    print_screen(screen_map)
-    return count_blocks(screen_map)
+    blocks = data.split("\n\n")
+    counter = 0
+    result = 0
+    for block in blocks:
+        counter += 1
+        left, right = parse_block(block)
+        right_order = in_right_order(left, right)
+        print("{} result is {}".format((left, right), right_order))
+        print()
+        if right_order < 0:
+            result += counter
+
+    return result
 
 
 def part2(data: str):
-    program = [int(x) for x in data.split(",")]
-    program[0] = 2
-    computer = IntcodeComputer()
-    computer.import_program(program)
-
-    return win_game_return_score(computer)
-
-
-def count_blocks(screen_map):
-    return len(find_tile_type(screen_map, 2))
-
-
-def find_tile_type(screen_map, tile_type):
-    return [x for x in screen_map.items() if x[1] == tile_type]
-
-
-def win_game_return_score(computer):
-    computer.compute_while_possible()
-    screen_map = {}
-    interpret_screen(computer.output, screen_map)
-    print_screen(screen_map)
-    previous_paddle_x, previous_ball = find_paddle_and_ball(screen_map)
-    if debug_mode:
-        print("Paddle: {}, ball: {}".format(previous_paddle_x, previous_ball))
-
-    joystick_value = 0
-
-    while count_blocks(screen_map) > 0:
-        computer.accept_input([joystick_value])
-        computer.reset_output()
-        computer.compute_while_possible()
-        interpret_screen(computer.output, screen_map)
-        print_screen(screen_map)
-
-        # decision
-        paddle, ball = find_paddle_and_ball(screen_map)
-        if paddle > ball[0]:
-            joystick_value = -1
-        elif paddle < ball[0]:
-            joystick_value = 1
-
-    return get_score(screen_map)
-
-
-def find_paddle_and_ball(screen_map):
-    paddle = max([int(coord[0]) for coord, _ in find_tile_type(screen_map, 3)])
-    ball, _ = find_tile_type(screen_map, 4)[0]
-    return paddle, ball
-
-
-def read_data():
-    with open(input_filename) as input_file:
-        return input_file.read()
+    pass
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    data = read_data()
+    data = get_data(os.path.basename(__file__))
 
     print(part1(data))
     print(part2(data))
