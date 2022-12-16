@@ -31,61 +31,72 @@ def compute_distances(graph_map):
     return distance_map
 
 
-def simulate(permutation, distance_map, flow_map):
-    open_pressure = 0
-    cumulative_pressure = 0
-    t = 0
-    max_time = 30
-    position = "AA"
-    for valve in permutation:
-        travel_time = distance_map[position, valve]
-        effective_time = min(travel_time, max_time - t)
+def check_global_max(global_max, pressure, visited):
+    if pressure > global_max[0]:
+        print(pressure, visited)
+        global_max[0] = pressure
+        global_max[1] = visited
 
-        cumulative_pressure += effective_time * open_pressure
-        t += effective_time
-        # print(t, open_pressure, cumulative_pressure)
 
-        if t >= max_time:
-            break
-        # open valve
-        cumulative_pressure += open_pressure
-        open_pressure += flow_map[valve]
-        t += 1
-        # print(t, open_pressure, cumulative_pressure)
-        position = valve
+def visit_and_open(start_time, source, destination, distance_map, flow_map, destinations, visited,
+                   stack, pressure, opened_pressure, global_max):
+    t = start_time
+    travel_time = distance_map[source, destination]
+    effective_time = min(travel_time, 30 - t)
+    pressure += effective_time * opened_pressure
+    t += effective_time
 
-    if t < max_time:
-        effective_time = max_time - t
-        cumulative_pressure += effective_time * open_pressure
+    if t >= 30:
+        check_global_max(global_max, pressure, stack)
+        return
 
-    # print(permutation, cumulative_pressure)
-    return cumulative_pressure
+    # open valve
+    visited.add(destination)
+    pressure += opened_pressure
+    opened_pressure += flow_map[destination]
+    t += 1
+
+    if t >= 30:
+        check_global_max(global_max, pressure, stack)
+        visited.remove(destination)
+        return
+
+    find_max_cumulative_pressure(t, destination, distance_map, flow_map, destinations, visited,
+                                 stack + [destination], pressure, opened_pressure, global_max)
+    visited.remove(destination)
+
+
+def find_max_cumulative_pressure(start_time, source, distance_map, flow_map, viable_destinations, visited, stack,
+                                 pressure,
+                                 opened_pressure, global_max):
+    for destination in viable_destinations:
+        if destination in visited:
+            continue
+        visit_and_open(start_time, source, destination, distance_map, flow_map, viable_destinations, visited, stack,
+                       pressure, opened_pressure, global_max)
+
+    effective_time = 30 - start_time
+    pressure += effective_time * opened_pressure
+    check_global_max(global_max, pressure, stack)
 
 
 def part1(data: str):
     flow_map, graph_map = parse_input_to_maps(data)
 
     distance_map = compute_distances(graph_map)
+    global_max = [0, []]
 
     viable_destinations = [(destination, flow_map[destination]) for destination in flow_map if
                            flow_map[destination] > 0]
     viable_destinations.sort(key=lambda x: x[1], reverse=True)
+    viable_destinations = [x[0] for x in viable_destinations]
 
     print(distance_map)
     print(viable_destinations)
 
-    max_pressure = 0
-    # get all permutations of viable destinations
-    for permutation in permutations([x[0] for x in viable_destinations]):
+    find_max_cumulative_pressure(0, "AA", distance_map, flow_map, viable_destinations, set(), [], 0, 0, global_max)
 
-        pressure = simulate(permutation, distance_map, flow_map)
-        if pressure > max_pressure:
-            max_pressure = pressure
-            print(permutation, pressure)
-
-     # simulate(["DD", "BB", "JJ", "HH", "EE", "CC"], distance_map, flow_map)
-    # return simulate([x[0] for x in viable_destinations], distance_map, flow_map)
-    return max_pressure
+    return global_max[0]
 
 
 def parse_input_to_maps(data):
