@@ -91,20 +91,27 @@ def recursively_find_max_pressure(vulcano, workers, valves, global_max):
         return
 
     indices_of_workers_to_choose_target = [i for i, worker in enumerate(workers) if worker.current_target is None]
+    if len(indices_of_workers_to_choose_target) > len(valves.remaining):
+        indices_of_workers_to_choose_target = indices_of_workers_to_choose_target[:len(valves.remaining)]
 
     next_step = valves.after_time_step()
-    for worker in workers:
+    for i, worker in enumerate(workers):
         if worker.is_target_reached():
+            # print("Worker {} reached target {}".format(i, worker.current_target))
             next_step.open(worker.current_target, vulcano)
             worker.reset()
 
-    for targets in itertools.permutations(valves.remaining, len(indices_of_workers_to_choose_target)):
-        recursive_workers = deepcopy(workers)
-        for i, new_target in zip(indices_of_workers_to_choose_target, targets):
-            worker = recursive_workers[i]
+    if len(indices_of_workers_to_choose_target) > 0:
+        for targets in itertools.permutations(valves.remaining, len(indices_of_workers_to_choose_target)):
+            recursive_workers = deepcopy(workers)
             recursive_step = deepcopy(next_step)
-            recursive_step.target(new_target)
-            worker.set_target(new_target, vulcano.distance_map[(worker.current_position, new_target)])
+            # print("setting targets: {} to workers {}".format(targets, [recursive_workers[i] for i in
+            #                                                            indices_of_workers_to_choose_target]))
+            for i, new_target in zip(indices_of_workers_to_choose_target, targets):
+                worker = recursive_workers[i]
+                recursive_step.target(new_target)
+                worker.set_target(new_target, vulcano.distance_map[(worker.current_position, new_target)])
+
             recursively_find_max_pressure(vulcano, recursive_workers, recursive_step, global_max)
 
     if len(indices_of_workers_to_choose_target) == 0 or len(valves.remaining) == 0:
@@ -157,6 +164,7 @@ def part2(data: str):
     recursively_find_max_pressure(vulcano, workers, Valves(0, 0, 0, 26, viable_destinations, None), global_max)
     return global_max[0]
 
+
 class Vulcano:
     def __init__(self, distance_map, flow_map):
         self.pressures_map = flow_map
@@ -191,7 +199,11 @@ class Valves:
         self.visited_in_order.append(valve)
 
     def target(self, valve):
-        self.remaining.remove(valve)
+        if valve in self.remaining:
+            self.remaining.remove(valve)
+            return True
+        else:
+            return False
 
 
 class Worker:
@@ -211,6 +223,9 @@ class Worker:
         self.current_position = self.current_target
         self.current_target = target
         self.steps_left = distance
+
+    def __repr__(self):
+        return "Worker({}, {}, {})".format(self.current_position, self.current_target, self.steps_left)
 
 
 if __name__ == "__main__":
