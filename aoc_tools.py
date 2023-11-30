@@ -11,7 +11,7 @@ def read_cookie_from_file():
 
 
 def download_data(day_number, input_filename):
-    url = f"https://adventofcode.com/2019/day/{day_number}/input"
+    url = f"https://adventofcode.com/2023/day/{day_number}/input"
     cookies = {"session": read_cookie_from_file()}
     if debug_input_data_download:
         print(cookies)
