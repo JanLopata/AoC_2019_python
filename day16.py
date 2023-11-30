@@ -94,6 +94,9 @@ def recursively_find_max_pressure(vulcano, workers, valves, global_max):
     if len(indices_of_workers_to_choose_target) > len(valves.remaining):
         indices_of_workers_to_choose_target = indices_of_workers_to_choose_target[:len(valves.remaining)]
 
+    if len(valves.visited_in_order) < 3:
+        print(valves.visited_in_order)
+
     next_step = valves.after_time_step()
     for i, worker in enumerate(workers):
         if worker.is_target_reached():
@@ -158,6 +161,7 @@ def part2(data: str):
     viable_destinations = [(destination, flow_map[destination]) for destination in flow_map if
                            flow_map[destination] > 0]
     viable_destinations = [x[0] for x in viable_destinations]
+    viable_destinations.sort(key=lambda x: flow_map[x], reverse=True)
     vulcano = Vulcano(distance_map, flow_map)
     workers = [Worker("AA"), Worker("AA")]
 
@@ -231,5 +235,5 @@ class Worker:
 if __name__ == "__main__":
     data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
+    # print(part1(data))
     print(part2(data))
