@@ -2,20 +2,58 @@ import os
 
 from aoc_tools import get_data
 
-debug_part2 = True
+debug_part1 = False
+debug_part2 = False
+
+
+def find_first_number(line, reverse, use_spelling):
+    if reverse:
+        line = line[::-1]
+
+    buffer = ""
+    for ch in line:
+        buffer += ch
+        if reverse and use_spelling:
+            possibly_reversed_buffer = buffer[::-1]
+        else:
+            possibly_reversed_buffer = buffer
+
+        if use_spelling:
+            spelled = buffer_contains_number(possibly_reversed_buffer)
+            if spelled is not None:
+                ch = number_spelling[spelled]
+        if ch.isdigit():
+            return int(ch)
+
 
 def part1(data):
     result = 0
-    for line in data.splitlines():
-        lower = -1
-        upper = -1
-        for ch in line:
-            if ch.isdigit() and lower == -1:
-                lower = int(ch)
-            if ch.isdigit():
-                upper = int(ch)
 
-        result += lower * 10 + upper
+    for line in data.splitlines():
+        lower = find_first_number(line, False, False)
+        upper = find_first_number(line, True, False)
+
+        if debug_part1:
+            print(lower, " ", upper)
+
+        val = lower * 10 + upper
+        result += val
+
+    return result
+
+
+def part2(data):
+    result = 0
+
+    for line in data.splitlines():
+        lower = find_first_number(line, False, True)
+        upper = find_first_number(line, True, True)
+
+        if debug_part2:
+            print(lower, " ", upper)
+
+        val = lower * 10 + upper
+        result += val
 
     return result
 
@@ -32,11 +70,6 @@ number_spelling = {
     "nine": "9"
 }
 
-def despell_numbers(line):
-    for key in number_spelling.keys():
-        line = line.replace(key, number_spelling[key])
-    return line
-
 
 def buffer_contains_number(buffer):
     for key in number_spelling.keys():
@@ -45,54 +78,27 @@ def buffer_contains_number(buffer):
     return None
 
 
-def part2(data):
-    result = 0
-    for line in data.splitlines():
-
-        lower = -1
-        buffer = ""
-        for ch in line:
-            buffer += ch
-            contained_number = buffer_contains_number(buffer)
-            if contained_number is not None:
-                ch = number_spelling[contained_number]
-                buffer = ""
-            if ch.isdigit():
-                lower = int(ch)
-                break
-
-        upper = -1
-        buffer = ""
-        for ch in line[::-1]:
-            buffer += ch
-            contained_number = buffer_contains_number(buffer[::-1])
-            if contained_number is not None:
-                ch = number_spelling[contained_number]
-                buffer = ""
-            if ch.isdigit():
-                upper = int(ch)
-                break
-
-        increment = lower * 10 + upper
-        if debug_part2:
-            print(line)
-            print(increment)
-        result += increment
-
-    return result
-
-
-if __name__ == "__main__":
-    input_data = get_data(os.path.basename(__file__))
-
-    testdata = """two1nine
+def do_tests():
+    testdata1 = """1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet"""
+    testdata2 = """two1nine
 eightwothree
 abcone2threexyz
 xtwone3four
 4nineeightseven2
 zoneight234
 7pqrstsixteen"""
+    print(part1(testdata1))
+    print(part2(testdata2))
+
+
+if __name__ == "__main__":
+    input_data = get_data(os.path.basename(__file__))
+
+    # do_tests()
 
     print(part1(input_data))
     print(part2(input_data))
-    # print(part2(testdata))
+
