@@ -1,41 +1,98 @@
 import os
 
+from aoc_tools import get_data
 
-def compute_fuel_req(mass: int):
-    return int(mass / 3) - 2
+debug_part2 = True
 
-
-def compute_combined_fuel_req(mass):
+def part1(data):
     result = 0
-    increment = compute_fuel_req(mass)
-    while increment > 0:
-        result += increment
-        increment = compute_fuel_req(increment)
+    for line in data.splitlines():
+        lower = -1
+        upper = -1
+        for ch in line:
+            if ch.isdigit() and lower == -1:
+                lower = int(ch)
+            if ch.isdigit():
+                upper = int(ch)
+
+        result += lower * 10 + upper
+
     return result
 
 
-def part1():
-    with open(input_filename) as input_file:
-        result = 0
-        for line in input_file:
-            result += compute_fuel_req(int(line))
+number_spelling = {
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9"
+}
 
-        print(result)
+def despell_numbers(line):
+    for key in number_spelling.keys():
+        line = line.replace(key, number_spelling[key])
+    return line
 
 
-def part2():
-    with open(input_filename) as input_file:
-        result = 0
-        for line in input_file:
-            result += compute_combined_fuel_req(int(line))
+def buffer_contains_number(buffer):
+    for key in number_spelling.keys():
+        if key in buffer:
+            return key
+    return None
 
-        print(result)
+
+def part2(data):
+    result = 0
+    for line in data.splitlines():
+
+        lower = -1
+        buffer = ""
+        for ch in line:
+            buffer += ch
+            contained_number = buffer_contains_number(buffer)
+            if contained_number is not None:
+                ch = number_spelling[contained_number]
+                buffer = ""
+            if ch.isdigit():
+                lower = int(ch)
+                break
+
+        upper = -1
+        buffer = ""
+        for ch in line[::-1]:
+            buffer += ch
+            contained_number = buffer_contains_number(buffer[::-1])
+            if contained_number is not None:
+                ch = number_spelling[contained_number]
+                buffer = ""
+            if ch.isdigit():
+                upper = int(ch)
+                break
+
+        increment = lower * 10 + upper
+        if debug_part2:
+            print(line)
+            print(increment)
+        result += increment
+
+    return result
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    # print(input_filename)
+    input_data = get_data(os.path.basename(__file__))
 
-    part1()
-    part2()
+    testdata = """two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen"""
+
+    print(part1(input_data))
+    print(part2(input_data))
+    # print(part2(testdata))
