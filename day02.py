@@ -23,6 +23,25 @@ def bag_check(draw_record):
     return True
 
 
+def compute_power(draw_record):
+    maxs = {}
+
+    for rec in draw_record:
+        color = rec[0]
+        count = rec[1]
+        if color in maxs:
+            if maxs[color] < count:
+                maxs[color] = count
+        else:
+            maxs[color] = count
+
+    product = 1
+    for x in maxs.values():
+        product *= x
+
+    return product
+
+
 def part1(data):
     result = 0
 
@@ -49,7 +68,25 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    result = 0
+
+    for line in data.splitlines():
+        split1 = line.split(": ")
+        game_id = int(split1[0].split()[1])
+        split2 = split1[1].split("; ")
+        draw_record = []
+        for draw in split2:
+            for cubes in draw.split(", "):
+                cubesplit = cubes.split(" ")
+                color = cubesplit[1]
+
+                count = int(cubesplit[0])
+                draw_record.append([color, count])
+
+            # dicts.append({game_id, draw_record})
+        result += compute_power(draw_record)
+
+    return result
 
 
 def do_tests():
@@ -61,7 +98,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"""
     testdata2 = """
     """
     print(part1(testdata1))
-    print(part2(testdata2))
+    print(part2(testdata1))
 
 
 if __name__ == "__main__":
