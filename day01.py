@@ -5,59 +5,6 @@ from aoc_tools import get_data
 debug_part1 = False
 debug_part2 = False
 
-
-def find_first_number(line, reverse, use_spelling):
-    if reverse:
-        line = line[::-1]
-
-    buffer = ""
-    for ch in line:
-        buffer += ch
-        if reverse and use_spelling:
-            possibly_reversed_buffer = buffer[::-1]
-        else:
-            possibly_reversed_buffer = buffer
-
-        if use_spelling:
-            spelled = buffer_contains_number(possibly_reversed_buffer)
-            if spelled is not None:
-                ch = number_spelling[spelled]
-        if ch.isdigit():
-            return int(ch)
-
-
-def part1(data):
-    result = 0
-
-    for line in data.splitlines():
-        lower = find_first_number(line, False, False)
-        upper = find_first_number(line, True, False)
-
-        if debug_part1:
-            print(lower, " ", upper)
-
-        val = lower * 10 + upper
-        result += val
-
-    return result
-
-
-def part2(data):
-    result = 0
-
-    for line in data.splitlines():
-        lower = find_first_number(line, False, True)
-        upper = find_first_number(line, True, True)
-
-        if debug_part2:
-            print(lower, " ", upper)
-
-        val = lower * 10 + upper
-        result += val
-
-    return result
-
-
 number_spelling = {
     "one": "1",
     "two": "2",
@@ -71,11 +18,64 @@ number_spelling = {
 }
 
 
-def buffer_contains_number(buffer):
-    for key in number_spelling.keys():
-        if key in buffer:
-            return key
-    return None
+def generate_search_map(spelling=False, reverse=False):
+    result = {}
+    for spelled in number_spelling:
+        number = int(number_spelling[spelled])
+        result[str(number)] = number
+        if spelling:
+            if reverse:
+                result[spelled[::-1]] = number
+            else:
+                result[spelled] = number
+    return result
+
+
+def find_first_hit(line, search_map):
+    buffer = ""
+    for ch in line:
+        buffer += ch
+        for key in search_map:
+            if buffer.endswith(key):
+                return search_map[key]
+
+
+def part1(data):
+    search_map1 = generate_search_map(False, False)
+    search_map2 = generate_search_map(False, True)
+
+    result = 0
+
+    for line in data.splitlines():
+        lower = find_first_hit(line, search_map1)
+        upper = find_first_hit(line[::-1], search_map2)
+
+        if debug_part1:
+            print(lower, " ", upper)
+
+        val = lower * 10 + upper
+        result += val
+
+    return result
+
+
+def part2(data):
+    search_map1 = generate_search_map(True, False)
+    search_map2 = generate_search_map(True, True)
+
+    result = 0
+
+    for line in data.splitlines():
+        lower = find_first_hit(line, search_map1)
+        upper = find_first_hit(line[::-1], search_map2)
+
+        if debug_part2:
+            print(lower, " ", upper)
+
+        val = lower * 10 + upper
+        result += val
+
+    return result
 
 
 def do_tests():
@@ -97,8 +97,7 @@ zoneight234
 if __name__ == "__main__":
     input_data = get_data(os.path.basename(__file__))
 
-    # do_tests()
+    do_tests()
 
     print(part1(input_data))
     print(part2(input_data))
-
