@@ -2,7 +2,7 @@ import os
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = False
 
 
@@ -34,20 +34,21 @@ def has_adjacent_part(dn, parts):
     return False
 
 
-def part1(data):
-    result = 0
+def coord_adjacent_part(dn, parts):
+    j1 = dn[2] - 1
+    j2 = dn[2] + 1 + dn[3]
 
-    input_lines = data.splitlines()
-    schematic = [x for x in input_lines]
-    if debug_part1:
-        for line in schematic:
-            print(line)
-        print()
+    rn = dn[1]
+    for i in [rn - 1, rn, rn + 1]:
+        for j in range(j1, j2):
+            if (i, j) in parts:
+                return i, j
 
-    parts = find_parts(schematic)
+    return None
 
+
+def detect_numbers(schematic):
     numbers_detected = []
-
     buffer = ""
     for i in range(len(schematic)):
         row = schematic[i]
@@ -60,13 +61,26 @@ def part1(data):
                 detected_number = (int(buffer), i, j - len(buffer), len(buffer))
                 numbers_detected.append(detected_number)
                 buffer = ""
-        if len(buffer) > 0:
-            detected_number = (int(buffer), i, len(row) - 1 - len(buffer), len(buffer))
-            numbers_detected.append(detected_number)
-            buffer = ""
+    return numbers_detected
 
-    print(numbers_detected)
-    print(parts)
+
+def part1(data):
+    result = 0
+
+    input_lines = data.splitlines()
+    schematic = [x + "." for x in input_lines]
+    if debug_part1:
+        for line in schematic:
+            print(line)
+        print()
+
+    parts = find_parts(schematic)
+
+    numbers_detected = detect_numbers(schematic)
+
+    if debug_part1:
+        print(numbers_detected)
+        print(parts)
 
     for dn in numbers_detected:
         if has_adjacent_part(dn, parts):
@@ -80,7 +94,38 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    result = 0
+
+    input_lines = data.splitlines()
+    schematic = [x + "." for x in input_lines]
+    parts = find_parts(schematic)
+    gear_parts = {}
+    for key in parts:
+        if parts[key] == "*":
+            gear_parts[key] = parts[key]
+
+    numbers_detected = detect_numbers(schematic)
+
+    possible_gears = {}
+    for num in numbers_detected:
+        possible_gear = coord_adjacent_part(num, gear_parts)
+        if possible_gear is not None:
+            if possible_gear in possible_gears:
+                possible_gears[possible_gear].append(num)
+            else:
+                possible_gears[possible_gear] = [num]
+
+    if debug_part2:
+        for g in possible_gears:
+            print(possible_gears[g])
+    for g in possible_gears:
+        pg = possible_gears[g]
+        if len(pg) != 2:
+            continue
+
+        result += pg[0][0] * pg[1][0]
+
+    return result
 
 
 def do_tests():
