@@ -77,6 +77,26 @@ class AlmanachMapper:
 
         return x
 
+    def cut_interval(self, start, end):
+
+        start_idx = len(self.range_breaks)
+        end_idx = len(self.range_breaks)
+        for i in range(len(self.range_breaks)):
+            if start <= self.range_breaks[i]:
+                start_idx = i - 1
+                break
+
+        for i in range(start_idx, len(self.range_breaks)):
+            if end <= self.range_breaks[i]:
+                end_idx = i
+                break
+
+        numbers = [start]
+        for i in range(start_idx + 1, end_idx):
+            numbers.append(self.range_breaks[i])
+        numbers.append(end)
+        return numbers
+
     def check_validity(self):
         prev = -math.inf
         for x in self.range_breaks:
@@ -120,7 +140,56 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    first = True
+    seeds_to_plant = []
+    almanach = []
+    for section in data.split("\n\n"):
+
+        if first:
+            seeds_to_plant = [int(x.strip()) for x in section.split(": ")[1].split(" ")]
+            if debug_part1:
+                print(seeds_to_plant)
+            first = False
+            continue
+
+        mapper = AlmanachMapper()
+        first_row = True
+        for line in section.splitlines():
+            if first_row:
+                first_row = False
+                continue
+
+            mapper.add_range(line)
+
+        almanach.append(mapper)
+
+    duos = extract_duos(seeds_to_plant)
+
+    current_min = math.inf
+    for duo in duos:
+        intervals = [(duo[0], duo[0] + duo[1])]
+        for mapper in almanach:
+            new_intervals = []
+            for interval in intervals:
+                cut_result = mapper.cut_interval(interval[0], interval[1])
+                for idx in range(0, len(cut_result) - 1):
+                    length = cut_result[idx + 1] - cut_result[idx]
+                    start = mapper.map_number(cut_result[idx])
+                    new_intervals.append((start, start + length))
+            intervals = new_intervals
+
+        for interval in intervals:
+            if interval[0] < current_min:
+                current_min = interval[0]
+
+    return current_min
+
+
+def extract_duos(seeds_to_plant):
+    duos = []
+    for i in range(int(len(seeds_to_plant) / 2)):
+        duos.append((seeds_to_plant[2 * i], seeds_to_plant[2 * i + 1]))
+    return duos
 
 
 def do_tests():

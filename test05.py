@@ -2,32 +2,40 @@ import unittest
 
 from parameterized import parameterized
 
+import day05
 import day05 as day
 
 
 class AoCTest(unittest.TestCase):
 
-    @parameterized.expand([["1002,4,3,4,33", "1002,4,3,4,99"]])
-    def test_int_computer(self, program, expected):
-        program_input = [int(x) for x in program.split(",")]
-        program_result = ','.join([str(x) for x in day.run_program(program_input, 0, [])])
-        self.assertEqual(expected, program_result)
+    @parameterized.expand([[[10, 20], [10, 20]], [[40, 70], [40, 50, 70]], [[10, 100], [10, 50, 98, 100]],
+                           [[70, 105], [70, 98, 100, 105]]])
+    def test_int_computer(self, data, expected):
+        almanach_input = """50 98 2
+52 50 48"""
 
-    @parameterized.expand([[1, 0], [2, 1], [3, 0]])
-    def test_1002_parameter_modes(self, position, mode):
-        self.assertEqual(mode, day.mode_for_nth_parameter(1002, position))
+        mapper = day05.AlmanachMapper()
+        for line in almanach_input.splitlines():
+            mapper.add_range(line)
 
-    @parameterized.expand([[-5, 999], [0, 999], [7, 999], [8, 1000], [9, 1001], [10, 1001], [231, 1001]])
-    def test_eight_comparator_program(self, input_value, output):
-        program_plain = """
-3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
-1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,
-999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99
-        """
-        program_input = [int(x) for x in program_plain.replace("\n", "").split(",")]
-        output_values = []
-        day.run_program(program_input, input_value, output_values)
-        self.assertEqual(output, output_values[-1])
+        result = mapper.cut_interval(data[0], data[1])
+
+        self.assertEqual(expected, result)
+
+    @parameterized.expand([[[81, 95], [81, 95]]])
+    def test_alm2(self, data, expected):
+
+        almanach_input = """0 15 37
+37 52 2
+39 0 15"""
+
+        mapper = day05.AlmanachMapper()
+        for line in almanach_input.splitlines():
+            mapper.add_range(line)
+
+        result = mapper.cut_interval(data[0], data[1])
+
+        self.assertEqual(expected, result)
 
 
 if __name__ == '__main__':
