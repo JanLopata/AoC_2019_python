@@ -14,9 +14,6 @@ def make_figures(r):
     print("============")
 
 
-EPSILON = 1e-7
-
-
 def part1(data):
     result = 1
 
@@ -25,7 +22,7 @@ def part1(data):
     distances = [int(x) for x in input_rows[1].split(": ")[1].split()]
 
     for i in range(len(durations)):
-        distance = distances[i]
+        distance = distances[i] + 1
         duration = durations[i]
 
         if debug_part1:
@@ -40,8 +37,8 @@ def part1(data):
 
 
 def compute_ways_to_win(distance, duration):
-    min_win = (duration - math.sqrt(duration * duration - 4 * distance)) / 2 + EPSILON
-    max_win = (duration + math.sqrt(duration * duration - 4 * distance)) / 2 - EPSILON
+    min_win = (duration - math.sqrt(duration * duration - 4 * distance)) / 2
+    max_win = (duration + math.sqrt(duration * duration - 4 * distance)) / 2
     ways_to_win = math.floor(max_win) - math.ceil(min_win) + 1
     return ways_to_win
 
