@@ -32,40 +32,65 @@ def compute_strength(card_numbers: list):
 
     v = d.values()
     if max(v) == 5:
-        return 7
+        return 7  # five of kind
 
     if max(v) == 4:
-        return 6
+        return 6  # four of kind
 
     if max(v) == 3:
         if len(v) == 2:
             return 5  # full-house
         else:
-            return 4
+            return 4  # tree of kind
 
     if max(v) == 2:
         if len(v) == 3:
             return 3  # two-pair
         else:
-            return 2
+            return 2  # one pair
 
-    return 1
+    return 1  # highest card
+
+
+def remap_joker(x, target):
+    if x == 1:
+        return target
+    return x
 
 
 class HandOfCards:
 
-    def __init__(self, line: str):
-        line_split = line.split()
-        self.cards_str = line_split[0]
-        self.cards = [map_card_to_number(x) for x in line_split[0]]
-        self.bet = int(line_split[1])
-        self.strength = compute_strength(self.cards)
-        self.comparison_key = self.compute_comparison_key()
+    def __init__(self, cards: str, bet: int):
+        self.cards_str = cards
+        self.cards = [map_card_to_number(x) for x in cards]
+        self.bet = bet
         self.rank = None
+        best_strength, best_joker = self.compute_strength()
+        self.best_joker = best_joker
+        self.strength = best_strength
+        self.comparison_key = self.compute_comparison_key()
 
     def __str__(self):
-        return "{} bet {} strength {} cards_n {} compkey {}".format(self.cards_str, self.bet, self.strength, self.cards,
-                                                                    self.comparison_key)
+        return "{} bet {} joker {} strength {} cards_n {} compkey {}".format(self.cards_str, self.bet, self.best_joker,
+                                                                             self.strength, self.cards,
+                                                                             self.comparison_key)
+
+    def compute_strength(self):
+        jokers = 0
+        if 1 in self.cards:
+            max_strength = 0
+            best_joker = None
+            # joker present - test every possibility
+            for joker_value in range(2, 15):
+                tmp = [remap_joker(x, joker_value) for x in self.cards]
+                strength = compute_strength(tmp)
+                if strength > max_strength:
+                    max_strength = strength
+                    best_joker = joker_value
+
+            return max_strength, best_joker
+        else:
+            return compute_strength(self.cards), None
 
     def compute_comparison_key(self):
         k = self.strength
@@ -83,7 +108,8 @@ def part1(data):
 
     hands = []
     for line in data.splitlines():
-        hand = HandOfCards(line)
+        split = line.split()
+        hand = HandOfCards(split[0], int(split[1]))
         hands.append(hand)
         # print(hand)
 
@@ -99,7 +125,26 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    hands = []
+    for line in data.splitlines():
+        split = line.split()
+        cards = split[0]
+        # introduce joker
+        cards = cards.replace("J", "1")
+        hand = HandOfCards(cards, int(split[1]))
+        hands.append(hand)
+        # print(hand)
+
+    hands.sort(key=lambda h: h.comparison_key)
+
+    result = 0
+    for i in range(len(hands)):
+        hand = hands[i]
+        hand.set_rank(i + 1)
+        # print(i + 1, hand)
+        result += hand.rank * hand.bet
+
+    return result
 
 
 def do_tests():
