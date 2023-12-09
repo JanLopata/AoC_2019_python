@@ -1,93 +1,113 @@
 import os
 
+from aoc_tools import get_data
 
-def part1(data: str, x_size=25, y_size=6):
-    full_ints = [int(x) for x in data]
-    layers = read_layers(full_ints, x_size, y_size)
-
-    zeros_count = [count_given_number(layer, 0) for layer in layers]
-    arg_min_zeros = zeros_count.index(min(zeros_count))
-    least_zeros_layer = layers[arg_min_zeros]
-
-    return count_given_number(least_zeros_layer, 1) * count_given_number(least_zeros_layer, 2)
+debug_part1 = True
+debug_part2 = False
 
 
-def read_layers(full_ints, x_size, y_size):
-    layers = []
-    layer_number = 0
-    y_number = 0
-    x_number = -1
-    for i in range(len(full_ints)):
-        x_number += 1
-        if x_number >= x_size:
-            x_number = 0
-            y_number += 1
-
-        if y_number >= y_size:
-            y_number = 0
-            layer_number += 1
-
-        if len(layers) <= layer_number:
-            layers.append(init_layer(x_size, y_size))
-        # print("{}, {}, {}, num={}".format(layer_number, y_number, x_number, full_ints[i]))
-
-        layers[layer_number][y_number][x_number] = full_ints[i]
-    return layers
-
-
-def count_given_number(layer, target):
-    result = 0
-    for row in layer:
-        for val in row:
-            result += val == target
+def parse_instructions(line):
+    result = []
+    for x in line:
+        if x == 'R':
+            result.append(1)
+        else:
+            result.append(0)
     return result
 
 
-def init_layer(x_size, y_size):
-    layer = []
-    for y in range(y_size):
-        layer.append([-1 for x in range(x_size)])
-    return layer
+def parse_dm(data):
+    result = {}
+    for line in data.splitlines():
+        line = line.replace("=", ",")
+        line = line.replace("(", "")
+        line = line.replace(")", "")
+        line = line.replace(" ", "")
+        split3 = line.split(",")
+        result[split3[0]] = [split3[1], split3[2]]
+    return result
 
 
-def render_layers(layers, x_size, y_size):
-    layer = layers[0]
-    for c in range(1, len(layers)):
-        layer_com = layers[c]
-        for x in range(x_size):
-            for y in range(y_size):
-                if (layer[y][x] == 2):
-                    layer[y][x] = layer_com[y][x]
+def part1(data):
+    split1 = data.split("\n\n")
+    instructions = parse_instructions(split1[0])
+    direction_map = parse_dm(split1[1])
+    if debug_part1:
+        print(instructions)
+        print(direction_map)
 
-    return layer
+    current = "AAA"
+    target = "ZZZ"
 
+    result = count_steps_to_destination(current, target, direction_map, instructions)
 
-def part2(data: str, x_size=25, y_size=6):
-    full_ints = [int(x) for x in data]
-    layers = read_layers(full_ints, x_size, y_size)
-
-    result_layer = render_layers(layers, x_size, y_size)
-    result_text = ""
-    for row in result_layer:
-        for val in row:
-            if val == 1:
-                result_text += "*"
-            else:
-                result_text += " "
-        result_text += "\n"
-
-    return result_text
+    return result
 
 
-def read_data():
-    with open(input_filename) as input_file:
-        return input_file.read()
+def count_steps_to_destination(current, target, direction_map, instructions):
+    idx = 0
+    result = 0
+    while current != target:
+        instr = instructions[idx]
+        # do step
+        current = direction_map[current][instr]
+        #
+        idx = (idx + 1) % len(instructions)
+        result += 1
+    return result
+
+
+def find_all_start_end(direction_map):
+    all_starts = [x for x in direction_map.keys() if x.endswith("A")]
+    all_ends = [x for x in direction_map.keys() if x.endswith("Z")]
+
+    result = []
+    for start in all_starts:
+        end = start[0:2] + "Z"
+        if end in all_ends:
+            result.append((start, end))
+    return result
+
+
+def part2(data):
+    split1 = data.split("\n\n")
+    instructions = parse_instructions(split1[0])
+    direction_map = parse_dm(split1[1])
+    if debug_part2:
+        print(instructions)
+        print(direction_map)
+
+    all_starts_end = find_all_start_end(direction_map)
+
+    print(all_starts_end)
+
+
+
+def do_tests():
+    testdata1 = """RL
+
+AAA = (BBB, CCC)
+BBB = (DDD, EEE)
+CCC = (ZZZ, GGG)
+DDD = (DDD, DDD)
+EEE = (EEE, EEE)
+GGG = (GGG, GGG)
+ZZZ = (ZZZ, ZZZ)"""
+    testdata2 = """LLR
+
+AAA = (BBB, BBB)
+BBB = (AAA, ZZZ)
+ZZZ = (ZZZ, ZZZ)
+"""
+    print(part1(testdata1))
+    print(part1(testdata2))
+    print(part2(testdata1))
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    data = read_data()
+    input_data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
-    print(part2(data))
+    do_tests()
+
+    print(part1(input_data))
+    print(part2(input_data))
