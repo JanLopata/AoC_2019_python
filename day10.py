@@ -44,6 +44,38 @@ def print_grid(grid):
         print(rowstr)
 
 
+def invert_2d(d):
+    return -d[0], -d[1]
+
+
+def plus_2d(pos, delta):
+    return pos[0] + delta[0], pos[1] + delta[1]
+
+
+def normal_2d(coords):
+    return coords[1], -coords[0]
+
+
+def do_depth_first_on_pipes(stack: list, visited, on_left_side: set, on_right_side: set, grid):
+    position, direction = stack.pop()
+    if grid[position[0]][position[1]] in {5, 10}:
+        normal = normal_2d(direction)
+        on_left = plus_2d(position, normal)
+        on_right = plus_2d(position, invert_2d(normal))
+        if grid[on_left[0]][on_left[1]] == 0:
+            on_left_side.add(on_left)
+        if grid[on_right[0]][on_right[1]] == 0:
+            on_right_side.add(on_right)
+
+    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+        if is_adjacent_connected(position, delta, grid):
+            new_coords = plus_2d(position, delta)
+            if new_coords not in visited:
+                stack.insert(0, (new_coords, delta))
+                visited[new_coords] = visited[position] + 1
+                break
+
+
 def do_breath_first_on_pipes(queue, visited, grid):
     current = queue.pop(0)
     for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
@@ -81,6 +113,38 @@ def find_loop(data: str):
         do_breath_first_on_pipes(queue, visited, grid)
 
     return visited, grid
+
+
+def find_loop2(data):
+    grid = []
+    for line in data.splitlines():
+        grid_line = [remap_char(x) for x in line]
+        grid_line.insert(0, 0)
+        grid_line.append(0)
+        grid.append(grid_line)
+
+    grid.insert(0, len(grid[0]) * [0])
+    grid.append(len(grid[0]) * [0])
+
+    if debug_part1:
+        print_grid(grid)
+
+    start_coords = None
+    for row in range(len(grid)):
+        for col in range(len(grid[row])):
+            if grid[row][col] == 15:
+                start_coords = (row, col)
+                break
+    stack = [(start_coords, (0, 0))]
+    visited = {start_coords: 0}
+
+    on_left_side = set()
+    on_right_side = set()
+
+    while len(stack) > 0:
+        do_depth_first_on_pipes(stack, visited, on_left_side, on_right_side, grid)
+
+    return visited, on_left_side, on_right_side, grid
 
 
 def compute_diff(a):
@@ -154,7 +218,7 @@ def compute_depth(area, grid, zero_idx):
 
 
 def part2(data):
-    visited, origi_grid = find_loop(data)
+    visited, on_left_side, on_right_side, origi_grid = find_loop2(data)
 
     grid_size = max(len(origi_grid), len(origi_grid[0]))
     grid = []
@@ -167,37 +231,30 @@ def part2(data):
     print()
     print_grid(grid)
 
-    current_color = 0
-    for row in range(grid_size):
+    areas = find_areas(grid, grid_size)
+    largest_idx = None
+    largest_size = 0
+    for idx in range(len(areas)):
+        current_size = len(areas[idx])
+        if current_size > largest_size:
+            largest_idx = idx
+            largest_size = current_size
 
-        change_on_line = set()
-        for col in range(1, grid_size - 1):
-            curr = grid[row][col]
-            nxt = grid[row][col + 1]
-            prev = grid[row][col -1]
-            if curr == 9 and (curr != nxt or curr != prev):
-                change_on_line.add(col)
+    print("Largest:", largest_idx, largest_size)
+    for coords in areas[largest_idx]:
+        grid[coords[0]][coords[1]] = 0
 
-        for c in change_on_line:
-            grid[row][c] = 'C'
+    considered = on_left_side
+    for pos in on_left_side:
+        if pos in areas[largest_idx]:
+            considered = on_right_side
+            break
 
-        print(row, change_on_line)
-
-        for col in range(grid_size - 1):
-            curr = grid[row][col]
-            if col in change_on_line:
-                current_color = 1 - current_color
-            if curr == 0:
-                grid[row][col] = current_color
+    for pos in considered:
+        grid[pos[0]][pos[1]] = 'C'
 
     print_grid(grid)
-    result = 0
-    for row in grid:
-        for c in row:
-            if c == 1:
-                result += 1
-
-    return result
+    print(considered)
 
 
 def do_tests():
