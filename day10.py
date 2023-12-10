@@ -5,7 +5,7 @@ import numpy as np
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = True
 
 directions_map = {8: "LEFT", 4: "UP", 2: "RIGHT", 1: "DOWN"}
@@ -133,12 +133,10 @@ def find_areas(grid, grid_size):
         for coords in areas[i]:
             grid[coords[0]][coords[1]] = i + 11
 
-
     return areas
 
 
 def compute_depth(area, grid, zero_idx):
-
     depth = math.inf
     for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
         for coords in area:
@@ -155,9 +153,6 @@ def compute_depth(area, grid, zero_idx):
     return depth
 
 
-
-
-
 def part2(data):
     visited, origi_grid = find_loop(data)
 
@@ -167,39 +162,43 @@ def part2(data):
         grid.append(grid_size * [0])
 
     for coord in visited:
-        grid[coord[0]][coord[1]] = 1
+        grid[coord[0]][coord[1]] = 9
 
     print()
     print_grid(grid)
 
-    areas = find_areas(grid, grid_size)
-    largest_idx = None
-    largest_size = 0
-    for idx in range(len(areas)):
-        current_size = len(areas[idx])
-        if current_size > largest_size:
-            largest_idx = idx
-            largest_size = current_size
+    current_color = 0
+    for row in range(grid_size):
 
-    print("Largest:", largest_idx, largest_size)
-    for coords in areas[largest_idx]:
-        grid[coords[0]][coords[1]] = 0
+        change_on_line = set()
+        for col in range(1, grid_size - 1):
+            curr = grid[row][col]
+            nxt = grid[row][col + 1]
+            prev = grid[row][col -1]
+            if curr == 9 and (curr != nxt or curr != prev):
+                change_on_line.add(col)
+
+        for c in change_on_line:
+            grid[row][c] = 'C'
+
+        print(row, change_on_line)
+
+        for col in range(grid_size - 1):
+            curr = grid[row][col]
+            if col in change_on_line:
+                current_color = 1 - current_color
+            if curr == 0:
+                grid[row][col] = current_color
 
     print_grid(grid)
-    print(areas)
-
-
     result = 0
-    for idx in range(len(areas)):
-        if idx == largest_idx:
-            continue
-        area = areas[idx]
-        depth = compute_depth(area, grid, zero_idx=0)
-        print("Area {} with size {} has depth {}".format(idx + 11, len(area), depth))
-        if depth % 2 == 1:
-            result += len(area)
+    for row in grid:
+        for c in row:
+            if c == 1:
+                result += 1
 
     return result
+
 
 def do_tests():
     testdata1 = """-L|F7
@@ -233,7 +232,7 @@ LJ.LJ
 .L--JL--J.
 ..........
 """
-    testdata5=""".F----7F7F7F7F-7....
+    testdata5 = """.F----7F7F7F7F-7....
 .|F--7||||||||FJ....
 .||.FJ||||||||L7....
 FJL7L7LJLJ||LJ.L-7..
