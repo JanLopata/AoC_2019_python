@@ -1,158 +1,141 @@
-import math
 import os
 
-debug = 0
+import numpy as np
+
+from aoc_tools import get_data
+
+debug_part1 = True
+debug_part2 = False
+
+directions_map = {8: "LEFT", 4: "UP", 2: "RIGHT", 1: "DOWN"}
+char_map = {'|': 5, '-': 10, 'L': 6, 'J': 12, '7': 9, 'F': 3, 'S': 15}
+direction_masks = {(-1, 0): (4, 1),
+                   (1, 0): (1, 4),
+                   (0, -1): (8, 2),
+                   (0, 1): (2, 8)
+                   }
 
 
-def create_spiral(origin, grid_size):
-    result = []
-    # origin omitted
-    for diameter in range(1, grid_size + 1):
-
-        for i in range(-diameter, diameter):
-            result.append((origin[0] - diameter, origin[1] + i))
-
-        for i in range(-diameter, diameter):
-            result.append((origin[0] + i, origin[1] + diameter))
-
-        for i in range(diameter, -diameter, -1):
-            result.append((origin[0] + diameter, origin[1] + i))
-
-        for i in range(diameter, -diameter, -1):
-            result.append((origin[0] + i, origin[1] - diameter))
-
-    return result
+def remap_char(x):
+    if x in char_map:
+        return char_map[x]
+    else:
+        return 0
 
 
-def compute_visible_points(origin, grid, grid_size):
-    found_points = []
-    spiral = create_spiral(origin, grid_size)
-
-    for point in spiral:
-        if point in grid:
-            found_points.append(point)
-            remove_invisible(grid, grid_size, origin, point)
-
-    if debug:
-        print(origin, len(grid), len(found_points))
-    return len(found_points)
+def is_adjacent_connected(origin, delta, grid):
+    x = grid[origin[0]][origin[1]]
+    y = grid[origin[0] + delta[0]][origin[1] + delta[1]]
+    masks = direction_masks[delta]
+    one_way = x & masks[0] > 0
+    second_way = y & masks[1] > 0
+    return one_way and second_way
 
 
-def gcd(a, b):
-    sign_a = -1 if a < 0 else 1
-    sign_b = -1 if b < 0 else 1
-    a = a * sign_a
-    b = b * sign_b
-    while b != 0:
-        (a, b) = (b, a % b)
-    return a
+def print_grid(grid):
+    for row in grid:
+        rowstr = ""
+        for x in row:
+            if x == 0:
+                x = "."
+            rowstr += str(x).rjust(3, ' ')
+
+        print(rowstr)
 
 
-def remove_invisible(grid: set, grid_size, origin, point):
-    delta = (point[0] - origin[0], point[1] - origin[1])
-    divider = gcd(delta[0], delta[1])
-    if divider > 1:
-        delta = (int(delta[0] / divider), int(delta[1] / divider))
-
-    inc = 0
-    while True:
-        inc += 1
-        x = point[0] + inc * delta[0]
-        if abs(x) > grid_size:
-            break
-        y = point[1] + inc * delta[1]
-        if abs(y) > grid_size:
-            break
-
-        if (x, y) in grid:
-            if debug:
-                print("removing ", (x, y))
-            grid.remove((x, y))
+def do_breath_first(queue, visited, grid):
+    current = queue.pop(0)
+    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+        if is_adjacent_connected(current, delta, grid):
+            new_coords = (current[0] + delta[0], current[1] + delta[1])
+            if new_coords not in visited:
+                queue.append(new_coords)
+                visited[new_coords] = visited[current] + 1
 
 
-def part1(data: str):
-    grid_data, grid_size = read_grid_to_set(data)
+def part1(data):
 
-    visibility_data = {}
-    for origin in grid_data:
-        visible_count = compute_visible_points(origin, set(grid_data), grid_size)
-        visibility_data[origin] = visible_count
+    grid = []
+    for line in data.splitlines():
+        grid_line = [remap_char(x) for x in line]
+        grid_line.insert(0, 0)
+        grid_line.append(0)
+        grid.append(grid_line)
 
-    max_origin = None
-    max_val = 0
-    for origin in visibility_data:
-        if visibility_data[origin] > max_val:
-            max_origin = origin
-            max_val = visibility_data[origin]
+    grid.insert(0, len(grid[0]) * [0])
+    grid.append(len(grid[0]) * [0])
 
-    return max_val, max_origin
+    print_grid(grid)
+
+    start_coords = None
+    for row in range(len(grid)):
+        for col in range(len(grid[row])):
+            if grid[row][col] == 15:
+                start_coords = (row, col)
+                break
+    queue = [start_coords]
+    visited = {start_coords: 0}
+
+    while len(queue) > 0:
+        do_breath_first(queue, visited, grid)
+
+    return max(visited.values())
 
 
-def read_grid_to_set(data):
-    rows = data.split("\n")
-    grid_data = set()
-    row_counter = 0
-    for row in rows:
-        if row == "":
-            continue
 
-        for i in range(len(row)):
-            if row[i] == "#":
-                grid_data.add((row_counter, i))
-
-        row_counter += 1
-    return grid_data, row_counter
+def compute_diff(a):
+    shifted = np.zeros_like(a)
+    shifted[1:] = a[:-1]
+    diff = a - shifted
+    return diff[1:]
 
 
 def part2(data):
-    _, origin = part1(data)
-    grid_data, grid_size = read_grid_to_set(data)
-    grid_data.remove(origin)
-
-    destroyed = []
-    sorted_points = sort_points_for_laser(grid_data, origin)
-    while True:
-
-        skip_angle = -4
-        if len(destroyed) >= 200:
-            break
-
-        i = 0
-        while i < len(sorted_points):
-
-            point_wa = sorted_points[i]
-            i += 1
-            if point_wa[1] <= skip_angle:
-                continue
-
-            destroyed.append(point_wa[0])
-            skip_angle = point_wa[1]
-            if len(destroyed) >= 200:
-                break
-
-    last = destroyed[-1]
-    return last[1] * 100 + last[0]
+    pass
 
 
-def sort_points_for_laser(grid_data, origin):
-    sorted_points = []
-    for point in grid_data:
-        delta = (point[0] - origin[0], point[1] - origin[1])
-        # clock-wise
-        theta = - math.atan2(delta[1], delta[0])
-        sorted_points.append((point, theta, delta[0] ** 2 + delta[1] ** 2))
-    return sorted(sorted_points, key=lambda x: (x[1], x[2]))
+def do_tests():
+    testdata1 = """-L|F7
+7S-7|
+L|7||
+-L-J|
+L|-JF
+"""
+    testdata2 = """7-F7-
+.FJ|7
+SJLL7
+|F--J
+LJ.LJ
+"""
+    testdata3 = """...........
+.S-------7.
+.|F-----7|.
+.||.....||.
+.||.....||.
+.|L-7.F-J|.
+.|..|.|..|.
+.L--J.L--J.
+..........."""
+    testdata4 = """..........
+.S------7.
+.|F----7|.
+.||....||.
+.||....||.
+.|L-7F-J|.
+.|..||..|.
+.L--JL--J.
+..........
+"""
 
-
-def read_data():
-    with open(input_filename) as input_file:
-        return input_file.read()
+    print(part1(testdata1))
+    print(part1(testdata2))
+    print(part2(testdata1))
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    data = read_data()
+    input_data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
-    print(part2(data))
+    do_tests()
+
+    print(part1(input_data))
+    print(part2(input_data))
