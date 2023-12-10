@@ -56,24 +56,27 @@ def normal_2d(coords):
     return coords[1], -coords[0]
 
 
-def do_depth_first_on_pipes(stack: list, visited, on_left_side: set, on_right_side: set, grid):
-    position, direction = stack.pop()
-    if grid[position[0]][position[1]] in {5, 10}:
-        normal = normal_2d(direction)
-        on_left = plus_2d(position, normal)
-        on_right = plus_2d(position, invert_2d(normal))
-        if grid[on_left[0]][on_left[1]] == 0:
-            on_left_side.add(on_left)
-        if grid[on_right[0]][on_right[1]] == 0:
-            on_right_side.add(on_right)
+def follow_path(path: list, visited, on_left_side: set, on_right_side: set, grid):
+    position, direction = path[-1]
+    # direct
+    normal = normal_2d(direction)
+    on_left = plus_2d(position, normal)
+    on_right = plus_2d(position, invert_2d(normal))
+    if grid[on_left[0]][on_left[1]] == 0:
+        on_left_side.add(on_left)
+    if grid[on_right[0]][on_right[1]] == 0:
+        on_right_side.add(on_right)
+
+    position = plus_2d(position, direction)
 
     for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
         if is_adjacent_connected(position, delta, grid):
             new_coords = plus_2d(position, delta)
             if new_coords not in visited:
-                stack.insert(0, (new_coords, delta))
-                visited[new_coords] = visited[position] + 1
-                break
+                visited[new_coords] = 1
+                path.append((position, delta))
+                return True
+    return False
 
 
 def do_breath_first_on_pipes(queue, visited, grid):
@@ -141,8 +144,8 @@ def find_loop2(data):
     on_left_side = set()
     on_right_side = set()
 
-    while len(stack) > 0:
-        do_depth_first_on_pipes(stack, visited, on_left_side, on_right_side, grid)
+    while follow_path(stack, visited, on_left_side, on_right_side, grid):
+        pass
 
     return visited, on_left_side, on_right_side, grid
 
