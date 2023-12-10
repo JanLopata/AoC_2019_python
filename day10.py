@@ -1,3 +1,4 @@
+import math
 import os
 
 import numpy as np
@@ -5,7 +6,7 @@ import numpy as np
 from aoc_tools import get_data
 
 debug_part1 = True
-debug_part2 = False
+debug_part2 = True
 
 directions_map = {8: "LEFT", 4: "UP", 2: "RIGHT", 1: "DOWN"}
 char_map = {'|': 5, '-': 10, 'L': 6, 'J': 12, '7': 9, 'F': 3, 'S': 15}
@@ -43,7 +44,7 @@ def print_grid(grid):
         print(rowstr)
 
 
-def do_breath_first(queue, visited, grid):
+def do_breath_first_on_pipes(queue, visited, grid):
     current = queue.pop(0)
     for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
         if is_adjacent_connected(current, delta, grid):
@@ -53,8 +54,7 @@ def do_breath_first(queue, visited, grid):
                 visited[new_coords] = visited[current] + 1
 
 
-def part1(data):
-
+def find_loop(data: str):
     grid = []
     for line in data.splitlines():
         grid_line = [remap_char(x) for x in line]
@@ -65,7 +65,8 @@ def part1(data):
     grid.insert(0, len(grid[0]) * [0])
     grid.append(len(grid[0]) * [0])
 
-    print_grid(grid)
+    if debug_part1:
+        print_grid(grid)
 
     start_coords = None
     for row in range(len(grid)):
@@ -77,10 +78,9 @@ def part1(data):
     visited = {start_coords: 0}
 
     while len(queue) > 0:
-        do_breath_first(queue, visited, grid)
+        do_breath_first_on_pipes(queue, visited, grid)
 
-    return max(visited.values())
-
+    return visited, grid
 
 
 def compute_diff(a):
@@ -90,9 +90,116 @@ def compute_diff(a):
     return diff[1:]
 
 
-def part2(data):
-    pass
+def part1(data):
+    visited, _ = find_loop(data)
+    return max(visited.values())
 
+
+def join_areas(areas, row, col):
+    current = len(areas) - 1
+
+    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+
+        target = row + delta[0], col + delta[1]
+        for i in range(len(areas) - 1):
+            if i == current:
+                continue
+            area_set = areas[i]
+            if target in area_set:
+                # must merge the areas
+                merged_with = areas.pop(current)
+                area_set.update(merged_with)
+                current = i
+                break
+
+
+def find_areas(grid, grid_size):
+    areas = []
+    idx = 0
+
+    for row in range(grid_size):
+        for col in range(grid_size):
+
+            if grid[row][col] > 0:
+                continue
+            coords = (row, col)
+            new_set = set()
+            new_set.add(coords)
+            areas.append(new_set)
+            join_areas(areas, row, col)
+
+    for i in range(len(areas)):
+
+        for coords in areas[i]:
+            grid[coords[0]][coords[1]] = i + 11
+
+
+    return areas
+
+
+def compute_depth(area, grid, zero_idx):
+
+    depth = math.inf
+    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+        for coords in area:
+            d = 0
+            i = coords[0] + delta[0]
+            j = coords[1] + delta[1]
+            while grid[i][j] != zero_idx:
+                d += 1
+                i += delta[0]
+                j += delta[1]
+            if d < depth:
+                depth = d
+
+    return depth
+
+
+
+
+
+def part2(data):
+    visited, origi_grid = find_loop(data)
+
+    grid_size = max(len(origi_grid), len(origi_grid[0]))
+    grid = []
+    for i in range(grid_size):
+        grid.append(grid_size * [0])
+
+    for coord in visited:
+        grid[coord[0]][coord[1]] = 1
+
+    print()
+    print_grid(grid)
+
+    areas = find_areas(grid, grid_size)
+    largest_idx = None
+    largest_size = 0
+    for idx in range(len(areas)):
+        current_size = len(areas[idx])
+        if current_size > largest_size:
+            largest_idx = idx
+            largest_size = current_size
+
+    print("Largest:", largest_idx, largest_size)
+    for coords in areas[largest_idx]:
+        grid[coords[0]][coords[1]] = 0
+
+    print_grid(grid)
+    print(areas)
+
+
+    result = 0
+    for idx in range(len(areas)):
+        if idx == largest_idx:
+            continue
+        area = areas[idx]
+        depth = compute_depth(area, grid, zero_idx=0)
+        print("Area {} with size {} has depth {}".format(idx + 11, len(area), depth))
+        if depth % 2 == 1:
+            result += len(area)
+
+    return result
 
 def do_tests():
     testdata1 = """-L|F7
@@ -126,10 +233,23 @@ LJ.LJ
 .L--JL--J.
 ..........
 """
+    testdata5=""".F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ...
+"""
 
-    print(part1(testdata1))
-    print(part1(testdata2))
+    # print(part1(testdata1))
+    # print(part1(testdata2))
     print(part2(testdata1))
+    print(part2(testdata4))
+    print(part2(testdata5))
 
 
 if __name__ == "__main__":
@@ -137,5 +257,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    print(part1(input_data))
-    print(part2(input_data))
+    # print(part1(input_data))
+    # print(part2(input_data))
