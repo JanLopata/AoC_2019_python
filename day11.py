@@ -1,125 +1,168 @@
 import os
 
-from intcode_computer import IntcodeComputer, StoppingCondition
+from aoc_tools import get_data
+
+debug_part1 = True
+debug_part2 = False
+
+GALAXY = '#'
 
 
-class PaintingRobot:
+def count_manhattan_expanded_distance(x, y, expanded: set, factor=2):
+    tmp_factor = factor - 1
+    if x > y:
+        tmp = x
+        x = y
+        y = tmp
 
-    def __init__(self):
-        self.debug_mode = False
-        self.direction_idx = 0
-        self.directions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
-        self.position = (0, 0)
-        self.environment = set()
-        self.visited = set()
+    expanded_dist = 0
+    for i in expanded:
+        if x < i < y:
+            expanded_dist += tmp_factor
 
-    def move(self):
-        direction = self.get_direction()
-        new_position = (self.position[0] + direction[0], self.position[1] + direction[1])
-        if self.debug_mode:
-            print("Moving {} -> {} by {}, dir. {}".format(self.position, new_position, direction, self.direction_idx))
-        self.position = new_position
-
-    def get_direction(self):
-        return self.directions[self.direction_idx]
-
-    def turn(self, turn_number):
-        increment = -1 if turn_number == 1 else 1
-        new_direction = (self.direction_idx + increment) % len(self.directions)
-        if self.debug_mode:
-            print("Turning to {} by {}".format(new_direction, turn_number))
-        self.direction_idx = new_direction
-
-    def paint(self, color_number):
-        if self.debug_mode:
-            print("Painting on {} to {}".format(self.position, color_number))
-        if color_number == 1:
-            self.environment.add(self.position)
-
-        if color_number == 0 and self.position in self.environment:
-            self.environment.remove(self.position)
-
-        self.visited.add(self.position)
-
-    def get_color_number(self):
-        return 1 if self.position in self.environment else 0
+    result = expanded_dist + y - x
+    return result
 
 
-def run_robot(computer, partial_output, robot):
-    stopping_condition = None
-    while stopping_condition != StoppingCondition.END_OF_PROGRAM:
+def part1(data):
+    grid = []
+    for line in data.splitlines():
+        row = []
+        for ch in line:
+            row.append(ch)
+        grid.append(row)
 
-        stopping_condition = computer.compute_while_possible()
-        if stopping_condition == StoppingCondition.EXPECTING_INPUT:
-            # read color
-            computer.accept_input([robot.get_color_number()])
+    glx = []
+    for i in range(len(grid)):
+        row = grid[i]
+        for j in range(len(row)):
+            if grid[i][j] == GALAXY:
+                glx.append((i, j))
 
-        if stopping_condition == StoppingCondition.STOP_ON_OUTPUT:
-            partial_output.append(computer.output[-1])
-            if len(partial_output) == 1:
-                robot.paint(partial_output[0])
-            if len(partial_output) >= 2:
-                robot.turn(partial_output[1])
-                robot.move()
-                partial_output.clear()
+    colwg = set()
+    rowwg = set()
+    for i in range(len(grid)):
+        row = grid[i]
+        has_g = False
+        for j in range(len(row)):
+            if grid[i][j] == GALAXY:
+                has_g = True
+                break
 
+        if not has_g:
+            rowwg.add(i)
 
-def init_robot(input_program):
-    program = [int(x) for x in input_program.split(",")]
-    computer = IntcodeComputer()
-    computer.import_program(program)
-    computer.set_stop_on_output(True)
-    # this encapsulation is bad
-    # - the intcode computer should be inside of robot
-    # - the environment should be outside of robot
-    robot = PaintingRobot()
-    return computer, robot
+    for j in range(len(grid[0])):
+        has_g = False
+        for i in range(len(grid)):
+            if grid[i][j] == GALAXY:
+                has_g = True
+                break
 
+        if not has_g:
+            colwg.add(j)
 
-def max_size(tuples_list: list):
-    return max(abs(x) for sub_tuple in tuples_list for x in sub_tuple)
+    print(rowwg)
+    print(colwg)
 
+    result = 0
+    for i in range(len(glx)):
+        for j in range(len(glx)):
 
-def print_environment(environment):
-    max_range = max_size(environment)
-    result = ""
-    for i in range(-max_range, max_range):
-        for j in range(-max_range, max_range):
-            c = 'X' if (j, i) in environment else ' '
-            result += c
-        result += "\n"
+            if i >= j:
+                continue
 
-    print(result)
+            result += count_manhattan_expanded_distance(glx[i][0], glx[j][0], rowwg)
+            result += count_manhattan_expanded_distance(glx[i][1], glx[j][1], colwg)
 
-
-def part1(input_program: str):
-    computer, robot = init_robot(input_program)
-    partial_output = []
-
-    run_robot(computer, partial_output, robot)
-
-    return len(robot.visited)
-
-
-def part2(input_program: str):
-    computer, robot = init_robot(input_program)
-    robot.environment.add((0, 0))
-    partial_output = []
-
-    run_robot(computer, partial_output, robot)
-
-    print_environment(robot.environment)
+    # print_grid(grid)
+    return result
 
 
-def read_data():
-    with open(input_filename) as input_file:
-        return input_file.read()
+def part2(data):
+    grid = []
+    for line in data.splitlines():
+        row = []
+        for ch in line:
+            row.append(ch)
+        grid.append(row)
+
+    glx = []
+    for i in range(len(grid)):
+        row = grid[i]
+        for j in range(len(row)):
+            if grid[i][j] == GALAXY:
+                glx.append((i, j))
+
+    colwg = set()
+    rowwg = set()
+    for i in range(len(grid)):
+        row = grid[i]
+        has_g = False
+        for j in range(len(row)):
+            if grid[i][j] == GALAXY:
+                has_g = True
+                break
+
+        if not has_g:
+            rowwg.add(i)
+
+    for j in range(len(grid[0])):
+        has_g = False
+        for i in range(len(grid)):
+            if grid[i][j] == GALAXY:
+                has_g = True
+                break
+
+        if not has_g:
+            colwg.add(j)
+
+    print(rowwg)
+    print(colwg)
+
+    result = 0
+    for i in range(len(glx)):
+        for j in range(len(glx)):
+
+            if i >= j:
+                continue
+
+            result += count_manhattan_expanded_distance(glx[i][0], glx[j][0], rowwg, 1000000)
+            result += count_manhattan_expanded_distance(glx[i][1], glx[j][1], colwg, 1000000)
+
+    # print_grid(grid)
+    return result
+
+def print_grid(grid):
+    for row in grid:
+        rowstr = ""
+        for x in row:
+            rowstr += x
+
+        print(rowstr)
+
+
+def do_tests():
+    testdata1 = """...#......
+.......#..
+#.........
+..........
+......#...
+.#........
+.........#
+..........
+.......#..
+#...#.....
+"""
+
+    print(part1(testdata1))
+    print(part2(testdata1))
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    data = read_data()
+    input_data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
-    print(part2(data))
+    do_tests()
+
+    print(part1(input_data))
+    print(part2(input_data))
