@@ -2,14 +2,17 @@ import os
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = False
 
+TARGET_ITERATIONS = 1000000000
+# TARGET_ITERATIONS = 15
 
-def roll_up(actors, row_max, col_max):
-    min_free = [0 for x in range(col_max)]
-    for i in range(row_max):
-        for j in range(col_max):
+
+def roll_up(actors, size):
+    min_free = [0 for x in range(size)]
+    for i in range(size):
+        for j in range(size):
             position = (i, j)
             if position not in actors:
                 continue
@@ -26,11 +29,11 @@ def roll_up(actors, row_max, col_max):
                 min_free[j] = i + 1
 
 
-def print_situation(actors, row_max, col_max):
+def print_situation(actors, size):
     res = ""
 
-    for i in range(row_max):
-        for j in range(col_max):
+    for i in range(size):
+        for j in range(size):
             pos = (i, j)
             if pos in actors:
                 res += actors[pos]
@@ -41,26 +44,14 @@ def print_situation(actors, row_max, col_max):
     print(res)
 
 
-def count_north_load(actors, row_max, col_max):
+def count_north_load(actors, size):
     result = 0
-    for i in range(row_max):
-        for j in range(col_max):
+    for i in range(size):
+        for j in range(size):
             pos = (i, j)
             if pos in actors and actors[pos] == 'O':
-                result += row_max - i
+                result += size - i
     return result
-
-
-def part1(data):
-    actors, row_max, col_max = read_actors(data)
-    if debug_part1:
-        print_situation(actors, row_max, col_max)
-
-    roll_up(actors, row_max, col_max)
-    if debug_part1:
-        print_situation(actors, row_max, col_max)
-
-    return count_north_load(actors, row_max, col_max)
 
 
 def read_actors(data):
@@ -74,11 +65,74 @@ def read_actors(data):
                 pos = (row_idx, col_idx)
                 actors[pos] = char
 
-    return actors, len(splitlines), len(splitlines[0])
+    assert len(splitlines) == len(splitlines[0])
+
+    return actors, len(splitlines)
+
+
+def rotate(actors, size):
+    temp = {}
+    for key in actors:
+        temp[key] = actors[key]
+
+    actors.clear()
+    for (i, j) in temp:
+        actors[(j, size - i - 1)] = temp[(i, j)]
+
+
+def part1(data):
+    actors, size = read_actors(data)
+    if debug_part1:
+        print_situation(actors, size)
+
+    roll_up(actors, size)
+    if debug_part1:
+        print_situation(actors, size)
+
+    return count_north_load(actors, size)
+
+
+def actors_hash(actors):
+    return hash(frozenset(actors.items()))
 
 
 def part2(data):
-    pass
+    actors, size = read_actors(data)
+
+    if debug_part1:
+        print_situation(actors, size)
+
+    pattern_hashes = {actors_hash(actors): -1}
+
+    idx = -1
+    while True:
+        idx += 1
+        do_one_cycle(actors, size)
+        current_hash = actors_hash(actors)
+        print(idx, count_north_load(actors, size))
+        if current_hash in pattern_hashes:
+            break
+        pattern_hashes[current_hash] = idx
+
+    loop_start = pattern_hashes[current_hash]
+    loop_length = idx - loop_start
+    remaining = (TARGET_ITERATIONS - loop_start - 1) % loop_length
+
+    print("remaining, loop_start, idx, loop_length " + str((remaining, loop_start, idx, loop_length)))
+    for i in range(remaining):
+        do_one_cycle(actors, size)
+        print(i, count_north_load(actors, size))
+
+    if debug_part1:
+        print_situation(actors, size)
+
+    return count_north_load(actors, size)
+
+
+def do_one_cycle(actors, size):
+    for i in range(4):
+        roll_up(actors, size)
+        rotate(actors, size)
 
 
 def do_tests():
