@@ -20,6 +20,11 @@ def check_symmetry(data, start):
     return True
 
 
+def print_grid(grid):
+    for row in grid:
+        print("".join(row))
+
+
 def find_symmetry(data):
     prev = -1
     for i in range(len(data)):
@@ -30,17 +35,29 @@ def find_symmetry(data):
     return 0
 
 
-def read_to_numbers(data):
+def find_symmetries(data):
+    symmetries_found = []
+    prev = -1
+    for i in range(len(data)):
+        if data[i] == prev:
+            if check_symmetry(data, i):
+                symmetries_found.append(i)
+        prev = data[i]
+
+    return symmetries_found
+
+
+def read_to_numbers(grid):
     rows = []
     cols = None
-    for line in data.splitlines():
+    for row in grid:
         new_row = 0
         if cols is None:
-            cols = [0 for _ in range(len(line))]
-        for col in range(len(line)):
+            cols = [0 for _ in range(len(row))]
+        for col in range(len(row)):
 
             val = 0
-            if line[col] == '#':
+            if row[col] == '#':
                 val = 1
             new_row = new_row * 2 + val
             cols[col] = cols[col] * 2 + val
@@ -48,10 +65,21 @@ def read_to_numbers(data):
     return cols, rows
 
 
+def convert_to_grid(data):
+    rows = []
+    for line in data.splitlines():
+        new_row = []
+        for col in range(len(line)):
+            new_row.append(line[col])
+        rows.append(new_row)
+    return rows
+
+
 def part1(data):
     result = 0
     for subdata in data.split("\n\n"):
-        cols, rows = read_to_numbers(subdata)
+        grid = convert_to_grid(subdata)
+        cols, rows = read_to_numbers(grid)
 
         sym_col = find_symmetry(cols)
         sym_row = find_symmetry(rows)
@@ -62,8 +90,60 @@ def part1(data):
     return result
 
 
+def get_smudge(ch):
+    if ch == '#':
+        return '.'
+    else:
+        return '#'
+
+
+def remove_smudge_and_find_symmetry(grid, ignored_sym):
+
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+
+            orig = grid[i][j]
+            smudge = get_smudge(orig)
+            grid[i][j] = smudge
+            cols, rows = read_to_numbers(grid)
+
+            grid[i][j] = orig
+
+            sym_col = find_symmetries(cols)
+            sym_row = find_symmetries(rows)
+            if ignored_sym[0] in sym_col:
+                sym_col.remove(ignored_sym[0])
+            if ignored_sym[1] in sym_row:
+                sym_row.remove(ignored_sym[1])
+
+            score = 0
+            if len(sym_col) == 1:
+                score += sym_col[0]
+
+            if len(sym_row) == 1:
+                score += sym_row[0] * 100
+
+            if score > 0:
+                return score
+
+    return 0
+
+
+def remove_smudge_and_find_symmetry_score(grid):
+    cols, rows = read_to_numbers(grid)
+    sym_col = find_symmetry(cols)
+    sym_row = find_symmetry(rows)
+
+    return remove_smudge_and_find_symmetry(grid, (sym_col, sym_row))
+
+
 def part2(data):
-    pass
+    result = 0
+    for subdata in data.split("\n\n"):
+        grid = convert_to_grid(subdata)
+        result += remove_smudge_and_find_symmetry_score(grid)
+
+    return result
 
 
 def do_tests():
@@ -83,8 +163,30 @@ def do_tests():
 ..##..###
 #....#..#
 """
+
+    testdata2 = """##....##.#.
+##.##.#..#.
+..####....#
+#######..##
+##..#......
+...##......
+###....##..
+..#.#..##..
+...#.#....#
+..##.......
+..##.#.##.#
+##...##..##
+######.##.#
+###...#..#.
+...###....#
+..##.......
+###.##....#"""
+
     print(part1(testdata1))
     print(part2(testdata1))
+
+    print(part1(testdata2))
+    print(part2(testdata2))
 
 
 if __name__ == "__main__":
@@ -93,4 +195,4 @@ if __name__ == "__main__":
     do_tests()
 
     print(part1(input_data))
-    # print(part2(input_data))
+    print(part2(input_data))
