@@ -1,239 +1,45 @@
 import os
 
 from aoc_tools import get_data
-from intcode_computer import IntcodeComputer
 
-dirs = {1: (0, -1), 2: (0, 1), 3: (-1, 0), 4: (1, 0)}
-
-debug_mode_bfs = False
-debug_mode_graph = False
-debug_mode_queue = False
-debug_mode_bot = False
+debug_part1 = True
+debug_part2 = False
 
 
-def all_directions_covered(direction_covered):
-    return all([len(x) == 4 for x in direction_covered.values()])
+def compute_hash(data):
+    result = 0
+    for ch in data:
+        result += ord(ch)
+        result *= 17
+        result %= 256
+    return result
 
 
-def part1(data: str):
-    program = [int(x) for x in data.split(",")]
-    computer = IntcodeComputer()
-    computer.import_program(program)
-    computer.compute_while_possible()
+def part1(data):
+    result = 0
+    for inp in data.strip().split(","):
+        result += compute_hash(inp)
 
-    bot = Bot(computer)
-    return bot.run()[0]
+    return result
 
 
-def part2(data: str):
-    program = [int(x) for x in data.split(",")]
-    computer = IntcodeComputer()
-    computer.import_program(program)
-    computer.compute_while_possible()
 
-    bot = Bot(computer)
-    bfs = bot.run()[1]
-    return max([len(path) for path in bfs.found_with_path.values()]) - 1
+def part2(data):
+    pass
 
 
-def is_fully_explored(position, graph):
-    return position in graph and len(graph[position]) == 4
+def do_tests():
+    testdata1 = """rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7
+"""
 
-
-class Bot:
-    def __init__(self, computer: IntcodeComputer):
-        self.maze = Maze()
-        self.computer = computer
-        self.position = (0, 0)
-
-    def run(self):
-
-        while True:
-            exploration_position, path = self.find_position_to_explore()
-            if path is None:
-                if debug_mode_bot:
-                    print("End of exploration")
-                break
-            self.travel_to_position(path)
-            self.explore()
-
-        bfs = BFS(self.maze, self.maze.finish)
-        p, path = bfs.search(lambda pos, graph: pos == (0, 0))
-
-        bfs = BFS(self.maze, self.maze.finish)
-        bfs.search(lambda x1, x2: False)
-        if debug_mode_bot:
-            print("Result path to {}: {}".format(p, path))
-        return len(path) - 1, bfs
-
-    def find_position_to_explore(self):
-        bfs = BFS(self.maze, self.position)
-        return bfs.search(lambda pos, graph: not is_fully_explored(pos, graph))
-
-    def travel_to_position(self, path):
-        if debug_mode_bot:
-            print("Bot: traveling using path {}".format(path))
-        for p in path[1:]:
-            self.computer.accept_input([p])
-            self.computer.compute_while_possible()
-            if debug_mode_bot:
-                print("Bot: input: {} output: {}".format(p, self.computer.output))
-            self.computer.reset_output()
-
-            direction = dirs[p]
-            self.position = add_2d(self.position, direction)
-            if debug_mode_bot:
-                print("Bot: new position {}".format(self.position))
-
-    def explore(self):
-        direction_idx, target = self.maze.give_unknown_direction(self.position)
-
-        self.computer.accept_input([direction_idx])
-        self.computer.compute_while_possible()
-        codes = self.computer.output
-        self.computer.reset_output()
-
-        if debug_mode_bot:
-            print("Exploring {} direction {}, output {}".format(self.position, direction_idx, codes))
-
-        self.maze.add_connection(self.position, direction_idx)
-
-        first_code = codes[0]
-        if first_code == 0:
-            # no move
-            self.maze.set_wall(target)
-            return
-
-        self.position = target
-        if debug_mode_bot:
-            print("Bot: moved to {}".format(self.position))
-
-        if first_code == 2:
-            self.maze.set_finish(target)
-
-
-class Maze:
-
-    def __init__(self):
-        self.graph = {(0, 0): set()}
-        self.walls = set()
-        self.start = (0, 0)
-        self.finish = None
-
-    def give_unknown_direction(self, position):
-        known = self.graph[position]
-        for dir_idx in dirs:
-            direction = dirs[dir_idx]
-            target = add_2d(direction, position)
-            if target not in known:
-                return dir_idx, target
-
-        return None
-
-    def add_connection(self, position, dir_idx):
-        direction = dirs[dir_idx]
-        target = add_2d(position, direction)
-        self.graph[position].add(target)
-        if debug_mode_graph:
-            print("graph grow: {} -> {}".format(position, target))
-        # inversion
-
-        if target in self.graph:
-            self.graph[target].add(position)
-        else:
-            self.graph[target] = {position}
-
-        return target
-
-    def set_finish(self, target):
-        self.finish = target
-
-    def set_wall(self, target):
-        self.walls.add(target)
-
-    def find_nearest(self, position, condition):
-        bfs = BFS(self.graph, position)
-        return bfs.search(condition)
-
-
-class BFS:
-
-    def __init__(self, maze, position):
-        self.maze = maze
-        self.start = position
-        self.queue = VisitQueue(position)
-        self.found_with_path = {}
-
-    def search(self, condition):
-        while not self.queue.is_empty():
-            candidate = self.queue.pop_first()
-            position = candidate[0].position
-            path = candidate[1] + [candidate[0].direction_idx]
-            self.found_with_path[position] = path
-
-            if position in self.maze.walls:
-                continue
-
-            if condition(position, self.maze.graph):
-                return position, self.found_with_path[position]
-
-            # expand new queue elements
-            for direction_idx in dirs:
-                direction = dirs[direction_idx]
-                target = add_2d(position, direction)
-                self.queue.add_element(target, direction_idx, path)
-
-        return None, None
-
-    def create_start_queue(self):
-        return [(Connection(self.start, 0), [])]
-
-
-class VisitQueue:
-    def __init__(self, start):
-        self.start = start
-        self.is_starting = True
-        self.queue = self.create_start_queue()
-        self.already_queued = set()
-
-    def create_start_queue(self):
-        return [(Connection(self.start, 0), [])]
-
-    def pop_first(self):
-        if debug_mode_queue:
-            print("Queue: popping first element {} of queue {}".format(self.queue[0], self.queue))
-        return self.queue.pop(0)
-
-    def add_element(self, target, direction_idx, current_path):
-        if target not in self.already_queued:
-            element = (Connection(target, direction_idx), current_path)
-            self.queue.append(element)
-            self.already_queued.add(target)
-            if debug_mode_queue:
-                print("Queue: adding element {}".format(element))
-        else:
-            if debug_mode_queue:
-                print("Queue: not adding already visited position {}".format(target))
-
-    def is_empty(self):
-        return len(self.queue) == 0
-
-
-class Connection:
-    def __init__(self, position, direction_idx):
-        self.position = position
-        self.direction_idx = direction_idx
-
-    def __repr__(self):
-        return "Connection to {} with {}".format(self.position, self.direction_idx)
-
-
-def add_2d(a, b):
-    return a[0] + b[0], a[1] + b[1]
+    print(part1(testdata1))
+    print(part2(testdata1))
 
 
 if __name__ == "__main__":
-    data = get_data(os.path.basename(__file__))
+    input_data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
-    print(part2(data))
+    do_tests()
+
+    print(part1(input_data))
+    print(part2(input_data))
