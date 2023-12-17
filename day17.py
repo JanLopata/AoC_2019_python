@@ -1,5 +1,6 @@
 import os
 import queue
+from datetime import datetime
 
 from aoc_tools import get_data
 
@@ -83,7 +84,7 @@ def part1(data):
         tmp_reached = position[0] + position[1]
         if tmp_reached > max_reached:
             max_reached = tmp_reached
-            print(max_reached)
+            print(max_reached, datetime.now().strftime("%H:%M:%S"))
 
         moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2],
                                     visited_set=visited_set)
