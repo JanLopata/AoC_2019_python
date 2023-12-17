@@ -20,14 +20,16 @@ def reached_position_hash(pos, vector, current_straight):
     return hash((pos[0], pos[1], vector[0], vector[1], current_straight))
 
 
-def find_possible_moves(grid_size, pos, vec, straight, visited_set:set):
+def find_possible_moves(grid_size, pos, vec, straight, visited_set: set):
     moves = []
 
     for v in ALL_DIRECTIONS:
         if v[0] == -1 * vec[0] and v[1] == -1 * vec[1]:
             continue
         is_straight = v[0] == vec[0] and v[1] == vec[1]
-        if straight >= 3 and is_straight:
+        if (not is_straight) and straight < 4:
+            continue
+        if straight >= 10 and is_straight:
             continue
 
         new_pos = pos[0] + v[0], pos[1] + v[1]
@@ -64,7 +66,9 @@ def part1(data):
             rewrites_grid[-1].append(0)
 
     go_queue = queue.Queue()
-    element = ((0, 0), (0, 0), 0, 0, set())
+    element = ((0, 0), (1, 0), 0, 0, set())
+    go_queue.put(element)
+    element = ((0, 0), (0, 1), 0, 0, set())
     go_queue.put(element)
 
     max_reached = 0
@@ -81,7 +85,8 @@ def part1(data):
             max_reached = tmp_reached
             print(max_reached)
 
-        moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2], visited_set=visited_set)
+        moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2],
+                                    visited_set=visited_set)
         # if debug_part1:
         #     print(moves)
 
@@ -103,7 +108,6 @@ def part1(data):
             new_visited_set.add(new_position)
             go_queue.put((new_position, vector, current_straight, proposed_price_on_position, new_visited_set))
 
-
     if debug_part1:
         sum_rw = 0
         print("Rewrites: ")
@@ -122,7 +126,6 @@ def part1(data):
                 minimal = min(vc.values())
                 s += str(minimal) + "\t"
             print(s)
-
 
     return min(visited_grid[-1][-1].values())
 
