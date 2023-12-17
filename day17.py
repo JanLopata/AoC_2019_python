@@ -1,10 +1,9 @@
-import math
 import os
 import queue
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = False
 
 ALL_DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -15,6 +14,10 @@ def out_of_bounds(grid_size, pos):
         return True
     if pos[1] < 0 or pos[1] >= grid_size:
         return True
+
+
+def reached_position_hash(pos, vector, current_straight):
+    return hash((pos[0], pos[1], vector[0], vector[1], current_straight))
 
 
 def find_possible_moves(grid_size, pos, vec, straight):
@@ -44,45 +47,53 @@ def part1(data):
     for line in data.splitlines():
         grid.append([int(x) for x in line])
 
-    for row in grid:
-        print(row)
+    if debug_part1:
+        for row in grid:
+            print(row)
 
     assert len(grid) == len(grid[0])
     grid_size = len(grid)
 
     visited_grid = init_visited_grid(grid)
-    visited_grid[0][0] = (0, (0, 0), 0)
 
     go_queue = queue.Queue()
-    element = ((0, 0), (0, 0), 0)
+    element = ((0, 0), (0, 0), 0, 0)
     go_queue.put(element)
 
     while not go_queue.empty():
         element = go_queue.get()
-        print("Dequeued:", element)
+        if debug_part1:
+            print("Dequeued:", element)
         position = element[0]
+        current_price = element[3]
         moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2])
-        print(moves)
+        if debug_part1:
+            print(moves)
 
         for move in moves:
             new_position = move[0]
-            current_price_on_position = visited_grid[new_position[0]][new_position[1]][0]
-            proposed_price_on_position = visited_grid[position[0]][position[1]][0] + grid[new_position[0]][new_position[1]]
+            vector = move[1]
+            current_straight = move[2]
+            rph = reached_position_hash(new_position, vector, current_straight)
+            visited_here_map = visited_grid[new_position[0]][new_position[1]]
+            proposed_price_on_position = current_price + grid[new_position[0]][new_position[1]]
+            if rph in visited_here_map:
+                already_visited_price = visited_here_map[rph]
+                if already_visited_price <= proposed_price_on_position:
+                    continue
 
-            if proposed_price_on_position < current_price_on_position:
-                visited_grid[new_position[0]][new_position[1]] = (proposed_price_on_position, move[1], move[2])
-                go_queue.put((new_position, move[1], move[2]))
+            visited_here_map[rph] = proposed_price_on_position
+            go_queue.put((new_position, vector, current_straight, proposed_price_on_position))
 
+    if debug_part1:
+        for vr in visited_grid:
+            s = ""
+            for vc in vr:
+                minimal = min(vc.values())
+                s += str(minimal) + "\t"
+            print(s)
 
-    result = visited_grid[-1][-1][0]
-
-    for vr in visited_grid:
-        s = ""
-        for vc in vr:
-            s += str(vc[0]) + "\t"
-        print(s)
-
-    return result
+    return min(visited_grid[-1][-1].values())
 
 
 def init_visited_grid(grid):
@@ -90,7 +101,7 @@ def init_visited_grid(grid):
     for row in grid:
         vr = []
         for col in grid:
-            vr.append((math.inf, (0, 0), 0))
+            vr.append({})
         visited_grid.append(vr)
     return visited_grid
 
@@ -125,5 +136,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    # print(part1(input_data))
+    print(part1(input_data))
     # print(part2(input_data))
