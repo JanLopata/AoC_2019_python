@@ -67,6 +67,7 @@ def part1(data):
     element = ((0, 0), (0, 0), 0, 0, set())
     go_queue.put(element)
 
+    max_reached = 0
     while not go_queue.empty():
         element = go_queue.get()
         if debug_part1:
@@ -74,6 +75,12 @@ def part1(data):
         position = element[0]
         current_price = element[3]
         visited_set = element[4]
+
+        tmp_reached = position[0] + position[1]
+        if tmp_reached > max_reached:
+            max_reached = tmp_reached
+            print(max_reached)
+
         moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2], visited_set=visited_set)
         # if debug_part1:
         #     print(moves)
@@ -160,5 +167,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    print(part1(input_data))
+    # print(part1(input_data))
     # print(part2(input_data))
