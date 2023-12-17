@@ -3,7 +3,7 @@ import queue
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = True
 
 d1 = (0, 1)
@@ -95,7 +95,7 @@ def compute_rays(pos, delta, grid, used_elements):
     return []
 
 
-def part1(data: str):
+def read_grid(data):
     grid = []
     for row in data.splitlines():
         gr = []
@@ -103,16 +103,42 @@ def part1(data: str):
             r = char
             gr.append(r)
         grid.append(gr)
-
     if debug_part1:
         for row in grid:
             s = "".join(row)
             print(s)
+    return grid
+
+
+def part1(data: str):
+    grid = read_grid(data)
 
     start = (0, 0)
     delta = (0, 1)
 
     return process_rays_and_compute_activation(delta, grid, start)
+
+
+def part2(data: str):
+    grid = read_grid(data)
+
+    maximum = 0
+    for i in range(len(grid)):
+        # left
+        current = process_rays_and_compute_activation((0, 1), grid, (i, 0))
+        maximum = current if current > maximum else maximum
+        # right
+        current = process_rays_and_compute_activation((0, -1), grid, (i, len(grid[0])))
+        maximum = current if current > maximum else maximum
+    for j in range(len(grid[0])):
+        # top
+        current = process_rays_and_compute_activation((1, 0), grid, (0, j))
+        maximum = current if current > maximum else maximum
+        # down
+        current = process_rays_and_compute_activation((-1, 0), grid, (len(grid), j))
+        maximum = current if current > maximum else maximum
+
+    return maximum
 
 
 def process_rays_and_compute_activation(delta, grid, start):
@@ -150,10 +176,6 @@ def compute_activation(activation, grid):
     return res
 
 
-def part2(data: str):
-    pass
-
-
 def do_tests():
     testdata1 = """.|...\\....
 |.-.\\.....
@@ -177,4 +199,4 @@ if __name__ == "__main__":
     do_tests()
 
     print(part1(input_data))
-    # print(part2(input_data))
+    print(part2(input_data))
