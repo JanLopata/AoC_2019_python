@@ -20,7 +20,7 @@ def reached_position_hash(pos, vector, current_straight):
     return hash((pos[0], pos[1], vector[0], vector[1], current_straight))
 
 
-def find_possible_moves(grid_size, pos, vec, straight):
+def find_possible_moves(grid_size, pos, vec, straight, visited_set:set):
     moves = []
 
     for v in ALL_DIRECTIONS:
@@ -31,6 +31,8 @@ def find_possible_moves(grid_size, pos, vec, straight):
             continue
 
         new_pos = pos[0] + v[0], pos[1] + v[1]
+        if new_pos in visited_set:
+            continue
 
         if out_of_bounds(grid_size, new_pos):
             continue
@@ -55,20 +57,26 @@ def part1(data):
     grid_size = len(grid)
 
     visited_grid = init_visited_grid(grid)
+    rewrites_grid = []
+    for i in range(grid_size):
+        rewrites_grid.append([])
+        for j in range(grid_size):
+            rewrites_grid[-1].append(0)
 
     go_queue = queue.Queue()
-    element = ((0, 0), (0, 0), 0, 0)
+    element = ((0, 0), (0, 0), 0, 0, set())
     go_queue.put(element)
 
     while not go_queue.empty():
         element = go_queue.get()
         if debug_part1:
-            print("Dequeued:", element)
+            print("Dequeued:", element[0])
         position = element[0]
         current_price = element[3]
-        moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2])
-        if debug_part1:
-            print(moves)
+        visited_set = element[4]
+        moves = find_possible_moves(grid_size=grid_size, pos=position, vec=element[1], straight=element[2], visited_set=visited_set)
+        # if debug_part1:
+        #     print(moves)
 
         for move in moves:
             new_position = move[0]
@@ -83,7 +91,22 @@ def part1(data):
                     continue
 
             visited_here_map[rph] = proposed_price_on_position
-            go_queue.put((new_position, vector, current_straight, proposed_price_on_position))
+            rewrites_grid[new_position[0]][new_position[1]] += 1
+            new_visited_set = set(visited_set)
+            new_visited_set.add(new_position)
+            go_queue.put((new_position, vector, current_straight, proposed_price_on_position, new_visited_set))
+
+
+    if debug_part1:
+        sum_rw = 0
+        print("Rewrites: ")
+        for rr in rewrites_grid:
+            s = ""
+            for rc in rr:
+                s += str(rc) + "\t"
+                sum_rw += rc
+            print(s)
+        print("Total:", sum_rw)
 
     if debug_part1:
         for vr in visited_grid:
@@ -92,6 +115,7 @@ def part1(data):
                 minimal = min(vc.values())
                 s += str(minimal) + "\t"
             print(s)
+
 
     return min(visited_grid[-1][-1].values())
 
