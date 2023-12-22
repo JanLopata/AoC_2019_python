@@ -42,18 +42,39 @@ def part1(data):
     return ec.score()
 
 
+def part2(data):
+    components = init_components_from_input(data)
+
+    i = 0
+    while True:
+        i += 1
+        if i % 10000 == 0:
+            print(i)
+        ec = EventCounter()
+        process_button_push(components, ec)
+        if ec.rx_low > 0:
+            return i
+
+
 class EventCounter:
 
     def __init__(self):
-
         self.high = 0
         self.low = 0
+        self.rx_high = 0
+        self.rx_low = 0
 
-    def add(self, value):
+    def add(self, value, name):
         if value == 0:
             self.low += 1
         else:
             self.high += 1
+
+        if name == "rx":
+            if value == 0:
+                self.rx_low += 1
+            else:
+                self.rx_high += 1
 
     def score(self):
         return self.low * self.high
@@ -66,7 +87,7 @@ def process_button_push(components, event_counter: EventCounter):
         pulse = pulse_queue.get()
         if debug_part1:
             print_pulse(pulse)
-        event_counter.add(pulse[1])
+        event_counter.add(pulse[0], pulse[1])
 
         if pulse[0] not in components:
             continue
@@ -99,10 +120,6 @@ def init_components_from_input(data):
             out_comp.init_input(component.name)
     components["broadcaster"].init_input("button")
     return components
-
-
-def part2(data):
-    pass
 
 
 class Component:
