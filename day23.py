@@ -3,7 +3,7 @@ import queue
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = False
 
 SLOPE_MAP = {">": (0, 1), "<": (0, -1), "^": (-1, 0), "v": (1, 0)}
@@ -40,7 +40,7 @@ def add_various_directions(visited: set, pos, next_steps, go_queue):
         visited_copy.update(visited)
         next_pos = (pos[0] + delta[0], pos[1] + delta[1])
         visited_copy.add(next_pos)
-        go_queue.put((visited, pos, delta, next_pos))
+        go_queue.put((visited_copy, pos, delta, next_pos))
 
 
 def find_next_steps(visited: set, maze_map: dict, pos_i, pos_j):
@@ -75,12 +75,14 @@ def find_next_steps(visited: set, maze_map: dict, pos_i, pos_j):
 
 
 def print_maze(maze_map, max_i, max_j, visited):
+    if not debug_part1:
+        return
     for i in range(max_i + 1):
         line = ""
         for j in range(max_j + 1):
             if (i, j) in visited:
                 ch = 'O'
-                if maze_map[(i, j)] != '.':
+                if maze_map[(i, j)] == '#':
                     print("ERROR - unreachable {} visited!".format((i, j)))
                     ch = 'X'
             else:
@@ -101,7 +103,7 @@ def part1(data):
     end_point = (max_i, max_j - 1)
 
     go_queue = queue.Queue()
-    go_queue.put((set(start_point), start_point, (1, 0), (1, 1)))
+    go_queue.put((set(), start_point, (0, 0), start_point))
 
     fun = 0
     while not go_queue.empty():
@@ -114,10 +116,10 @@ def part1(data):
             continue
 
         if pos == end_point:
+            fun_here = len(visited)
+            fun = max(fun, fun_here)
             if debug_part1:
-                fun_here = len(visited)
                 print("end reached in {} steps".format(fun_here))
-                fun = max(fun, fun_here)
                 print_maze(maze_map, max_i, max_j, visited)
 
         next_steps = find_next_steps(visited, maze_map, pos_i, pos_j)
@@ -131,7 +133,10 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    updated_data = data.replace("^", ".").replace("v", ".").replace("<", ".").replace(">", ".")
+    # print(updated_data)
+    return part1(updated_data)
+
 
 
 def do_tests():
@@ -169,5 +174,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    # print(part1(input_data))
+    print(part1(input_data))
     print(part2(input_data))
