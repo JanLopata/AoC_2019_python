@@ -1,9 +1,10 @@
 import os
+import queue
 
 from aoc_tools import get_data
 
 debug_part1 = False
-debug_part2 = False
+debug_part2 = True
 
 
 def add_to_playground(brick, playground):
@@ -23,6 +24,8 @@ def remove_from_supports(idx, supports):
 
     for i in to_remove:
         supports.pop(i)
+
+    return to_remove
 
 
 def remove_from_playground(brick, playground):
@@ -114,8 +117,62 @@ def part1(data):
     return len(bricks) - len(cannot)
 
 
+def copy_supports(supports):
+    supports_copy = {}
+    for key in supports:
+        supports_copy[key] = set()
+        for element in supports[key]:
+            supports_copy[key].add(element)
+
+    return supports_copy
+
+
 def part2(data):
-    pass
+    bricks = []
+    idx = 0
+    for line in data.splitlines():
+        idx += 1
+        brick = Bricke(idx, line)
+        bricks.append(brick)
+        if debug_part1:
+            print(brick, brick.all_blocks())
+
+    playground = {}
+    for brick in bricks:
+        add_to_playground(brick, playground)
+
+    supports = find_supports(playground)
+    while True:
+        if not fall_down(bricks, playground, supports):
+            break
+
+    if debug_part2:
+        print(supports)
+
+    unsafe = set()
+    for k in supports:
+        if len(supports[k]) == 1:
+            only_support = [x for x in supports[k]][0]
+            unsafe.add(only_support)
+            # print("{} cannot be ddd".format(only_support))
+
+    moved_sum = 0
+    for unsafe_block_idx in unsafe:
+        supports_copy = copy_supports(supports)
+
+        work_queue = queue.Queue()
+        work_queue.put(unsafe_block_idx)
+
+        moved = 0
+        while not work_queue.empty():
+            current_idx = work_queue.get()
+            removed = remove_from_supports(current_idx, supports_copy)
+            moved += len(removed)
+            for rem in removed:
+                work_queue.put(rem)
+        moved_sum += moved
+
+    return moved_sum
 
 
 class Bricke:
@@ -163,4 +220,4 @@ if __name__ == "__main__":
     do_tests()
 
     print(part1(input_data))
-    # print(part2(input_data))
+    print(part2(input_data))
