@@ -47,6 +47,16 @@ def init_distance_grid(grid, start):
     return distance_grid
 
 
+def init_checker_counter_grid(grid):
+    result = []
+    for row in grid:
+        d_row = []
+        result.append(d_row)
+        for _ in row:
+            d_row.append(0)
+    return result
+
+
 def count_reachable(max_steps, distance_grid):
     reachable = 0
     for row in distance_grid:
@@ -59,6 +69,7 @@ def count_reachable(max_steps, distance_grid):
 def part1(data):
     grid, start = read_grid(data)
     distance_grid = init_distance_grid(grid, start)
+    target = 6 if len(grid) < 20 else 64
 
     go_queue = queue.Queue()
     go_queue.put(start)
@@ -70,9 +81,10 @@ def part1(data):
         position = go_queue.get()
         distance = distance_grid[position[0]][position[1]]
         if distance > distance_max:
-            print("Current reached distance: ", distance)
+            if debug_part1:
+                print("Current reached distance: ", distance)
             distance_max = distance
-            if distance_max > 65:
+            if distance_max > target + 1:
                 break
 
         for delta in DIRS:
@@ -83,13 +95,13 @@ def part1(data):
             if grid[x][y] == '#':
                 continue
 
-            if distance + 1 > distance_grid[x][y]:
+            if distance + 1 >= distance_grid[x][y]:
                 continue
 
             distance_grid[x][y] = distance + 1
             go_queue.put((x, y))
 
-    return count_reachable(6 if len(grid) < 20 else 64, distance_grid)
+    return count_reachable(target, distance_grid)
 
 
 def part2(data):
