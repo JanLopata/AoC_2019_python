@@ -1,8 +1,9 @@
+import math
 import os
 
 from aoc_tools import get_data
 
-debug_part1 = True
+debug_part1 = False
 debug_part2 = False
 
 
@@ -57,6 +58,19 @@ def count_steps_to_destination(current, target, direction_map, instructions):
     return result
 
 
+def count_steps_to_some_end(current, direction_map, instructions):
+    idx = 0
+    result = 0
+    while current[2] != 'Z':
+        instr = instructions[idx]
+        # do step
+        current = direction_map[current][instr]
+        #
+        idx = (idx + 1) % len(instructions)
+        result += 1
+    return result
+
+
 def find_all_start_end(direction_map):
     all_starts = [x for x in direction_map.keys() if x.endswith("A")]
     all_ends = [x for x in direction_map.keys() if x.endswith("Z")]
@@ -77,10 +91,17 @@ def part2(data):
         print(instructions)
         print(direction_map)
 
-    all_starts_end = find_all_start_end(direction_map)
+    all_starts = [x for x in direction_map.keys() if x.endswith("A")]
 
-    print(all_starts_end)
+    steps_per_start = []
+    for start in all_starts:
+        steps_per_start.append(count_steps_to_some_end(start, direction_map, instructions))
 
+    result = steps_per_start[0]
+    for x in steps_per_start:
+        result = math.lcm(result, x)
+
+    return result
 
 
 def do_tests():
@@ -99,9 +120,20 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)
 """
+    testdata3 = """LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)"""
+
     print(part1(testdata1))
     print(part1(testdata2))
-    print(part2(testdata1))
+    print(part2(testdata3))
 
 
 if __name__ == "__main__":
