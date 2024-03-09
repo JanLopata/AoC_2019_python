@@ -18,6 +18,8 @@ direction_masks = {(-1, 0): (4, 1),
 side_map = {
     (5, (-1, +0)): ([(+0, -1)], [(+0, +1)]),
     (5, (+1, +0)): ([(+0, +1)], [(+0, -1)]),
+    (10, (+0, -1)): ([(+1, +0)], [(-1, +0)]),
+    (10, (+0, +1)): ([(-1, +0)], [(+1, +0)]),
     # TODO: continue adding values here
 }
 
@@ -71,7 +73,7 @@ def get_left_and_right(pos, here_num, direction):
 
 
 def delta_list_plus_position(delta_list, position):
-    return [(position[0] + delta[0], position[1] + delta[1]) for delta in delta_list]
+    return [plus_2d(position, delta) for delta in delta_list]
 
 
 def add_all(elements_to_add, target):
@@ -161,6 +163,11 @@ def find_loop2(data):
     on_left_side = set()
     on_right_side = set()
 
+    follow_path(stack, visited, on_left_side, on_right_side, grid)
+    # trick to visit start twice:
+    if len(stack) > 1 and stack[0][0] in visited:
+        visited.pop(stack[0][0])
+
     while follow_path(stack, visited, on_left_side, on_right_side, grid):
         pass
 
@@ -248,11 +255,15 @@ def part2(data):
     for i in range(grid_size):
         grid.append(grid_size * [0])
 
+    for pos in on_left_side:
+        grid[pos[0]][pos[1]] = 'X'
+
+    for pos in on_right_side:
+        grid[pos[0]][pos[1]] = 'Y'
+
     for pos in visited:
         grid[pos[0]][pos[1]] = '@'
 
-    for pos in on_left_side:
-        grid[pos[0]][pos[1]] = 'X'
 
     print_grid(grid)
 
