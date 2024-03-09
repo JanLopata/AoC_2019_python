@@ -1,4 +1,3 @@
-import math
 import os
 
 import numpy as np
@@ -20,6 +19,7 @@ DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 inverse_char_map = {v: k for k, v in char_map.items()}
 
+# TODO: there is probably some connection between the 'direction_masks' and the 'side_map'
 side_map = {
     (5, (-1, +0)): ([(+0, -1)], [(+0, +1)]),
     (5, (+1, +0)): ([(+0, +1)], [(+0, -1)]),
@@ -69,16 +69,8 @@ def print_grid(grid, wide=False):
         print(rowstr)
 
 
-def invert_2d(d):
-    return -d[0], -d[1]
-
-
 def plus_2d(pos, delta):
     return pos[0] + delta[0], pos[1] + delta[1]
-
-
-def normal_2d(coords):
-    return coords[1], -coords[0]
 
 
 def get_left_and_right(pos, here_num, direction):
@@ -221,64 +213,6 @@ def part1(data):
     return max(visited.values())
 
 
-def join_areas(areas, row, col):
-    current = len(areas) - 1
-
-    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-
-        target = row + delta[0], col + delta[1]
-        for i in range(len(areas) - 1):
-            if i == current:
-                continue
-            area_set = areas[i]
-            if target in area_set:
-                # must merge the areas
-                merged_with = areas.pop(current)
-                area_set.update(merged_with)
-                current = i
-                break
-
-
-def find_areas(grid, grid_size):
-    areas = []
-    idx = 0
-
-    for row in range(grid_size):
-        for col in range(grid_size):
-
-            if grid[row][col] > 0:
-                continue
-            coords = (row, col)
-            new_set = set()
-            new_set.add(coords)
-            areas.append(new_set)
-            join_areas(areas, row, col)
-
-    for i in range(len(areas)):
-
-        for coords in areas[i]:
-            grid[coords[0]][coords[1]] = i + 11
-
-    return areas
-
-
-def compute_depth(area, grid, zero_idx):
-    depth = math.inf
-    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-        for coords in area:
-            d = 0
-            i = coords[0] + delta[0]
-            j = coords[1] + delta[1]
-            while grid[i][j] != zero_idx:
-                d += 1
-                i += delta[0]
-                j += delta[1]
-            if d < depth:
-                depth = d
-
-    return depth
-
-
 def declutter(origi_grid, visited):
     for i in range(len(origi_grid)):
         for j in range(len(origi_grid[i])):
@@ -304,7 +238,6 @@ def expand_area(limits, start):
                 stack.append(next_pos)
 
     return visited
-
 
 
 def find_areas2(limits, starts):
@@ -334,24 +267,6 @@ def part2(data):
     right_areas = find_areas2(visited, on_right_side)
 
     return len(left_areas) if left_areas is not None else len(right_areas)
-
-    print(left_areas, right_areas)
-
-    grid_size = max(len(origi_grid), len(origi_grid[0]))
-    grid = []
-    for i in range(grid_size):
-        grid.append(grid_size * [0])
-
-    for pos in on_left_side:
-        grid[pos[0]][pos[1]] = 'X'
-
-    for pos in on_right_side:
-        grid[pos[0]][pos[1]] = 'Y'
-
-    for pos in visited:
-        grid[pos[0]][pos[1]] = origi_grid[pos[0]][pos[1]]
-
-    print_grid(grid)
 
 
 def do_tests():
