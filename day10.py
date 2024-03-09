@@ -7,14 +7,18 @@ from aoc_tools import get_data
 
 debug_part1 = True
 debug_part2 = True
+debug_follow_path = False
 
 directions_map = {8: "LEFT", 4: "UP", 2: "RIGHT", 1: "DOWN"}
-char_map = {'|': 5, '-': 10, 'L': 6, 'J': 12, '7': 9, 'F': 3, 'S': 15}
+char_map = {'|': 5, '-': 10, 'L': 6, 'J': 12, '7': 9, 'F': 3, 'S': 15, '.': 0}
 direction_masks = {(-1, 0): (4, 1),
                    (1, 0): (1, 4),
                    (0, -1): (8, 2),
                    (0, 1): (2, 8)
                    }
+
+inverse_char_map = {v: k for k, v in char_map.items()}
+
 side_map = {
     (5, (-1, +0)): ([(+0, -1)], [(+0, +1)]),
     (5, (+1, +0)): ([(+0, +1)], [(+0, -1)]),
@@ -26,8 +30,8 @@ side_map = {
     (12, (+0, -1)): ([(+0, +1), (+1, +0)], []),
     (9, (+0, -1)): ([], [(+0, +1), (-1, +0)]),
     (9, (+1, +0)): ([(+0, +1), (-1, +0)], []),
-    (3, (+0, +1)): ([], [(+0, -1), (-1, +0)]),
-    (3, (+1, +0)): ([(+0, -1), (-1, +0)], []),
+    (3, (+0, +1)): ([(+0, -1), (-1, +0)], []),
+    (3, (+1, +0)): ([], [(+0, -1), (-1, +0)]),
 }
 
 
@@ -47,13 +51,19 @@ def is_adjacent_connected(origin, delta, grid):
     return one_way and second_way
 
 
-def print_grid(grid):
+def print_grid(grid, wide=False):
     for row in grid:
         rowstr = ""
         for x in row:
-            if x == 0:
+            if x == 0 and wide:
                 x = "."
-            rowstr += str(x).rjust(3, ' ')
+            if wide:
+                rowstr += str(x).rjust(3, ' ')
+            else:
+                if x in inverse_char_map:
+                    rowstr += inverse_char_map[x]
+                else:
+                    rowstr += x
 
         print(rowstr)
 
@@ -75,8 +85,7 @@ def get_left_and_right(pos, here_num, direction):
         return [], []
     else:
         lr = side_map[(here_num, direction)]
-        mytupl = delta_list_plus_position(lr[0], pos), delta_list_plus_position(lr[1], pos)
-        return mytupl
+        return delta_list_plus_position(lr[0], pos), delta_list_plus_position(lr[1], pos)
 
 
 def delta_list_plus_position(delta_list, position):
@@ -88,6 +97,28 @@ def add_all(elements_to_add, target):
         target.add(to_check)
 
 
+def debug_print_follow_path(origi_grid, left_side, right_side, path):
+    if not debug_follow_path:
+        return
+    grid_size = max(len(origi_grid), len(origi_grid[0]))
+    dbg_grid = []
+    for i in range(grid_size):
+        dbg_grid.append(grid_size * [0])
+
+    for p_d in path:
+        p = p_d[0]
+        dbg_grid[p[0]][p[1]] = origi_grid[p[0]][p[1]]
+
+    for p in left_side:
+        dbg_grid[p[0]][p[1]] = 'X'
+    for p in right_side:
+        dbg_grid[p[0]][p[1]] = 'Y'
+
+
+    print_grid(dbg_grid)
+    print()
+
+
 def follow_path(path: list, visited, on_left_side: set, on_right_side: set, grid):
     position, direction = path[-1]
 
@@ -95,6 +126,8 @@ def follow_path(path: list, visited, on_left_side: set, on_right_side: set, grid
 
     add_all(left_side, on_left_side)
     add_all(right_side, on_right_side)
+    
+    debug_print_follow_path(grid, left_side, right_side, path)
 
     position = plus_2d(position, direction)
 
@@ -149,21 +182,10 @@ def find_start_coords(grid):
                 return row, col
 
 
-def find_loop2(data):
-    grid = []
-    for line in data.splitlines():
-        grid_line = [remap_char(x) for x in line]
-        grid_line.insert(0, 0)
-        grid_line.append(0)
-        grid.append(grid_line)
-
-    grid.insert(0, len(grid[0]) * [0])
-    grid.append(len(grid[0]) * [0])
-
+def find_loop2(grid, start_coords):
     if debug_part1:
         print_grid(grid)
 
-    start_coords = find_start_coords(grid)
     stack = [(start_coords, (0, 0))]
     visited = {start_coords: 0}
 
@@ -177,6 +199,12 @@ def find_loop2(data):
 
     while follow_path(stack, visited, on_left_side, on_right_side, grid):
         pass
+
+    for vis in visited:
+        if vis in on_left_side:
+            on_left_side.remove(vis)
+        if vis in on_right_side:
+            on_right_side.remove(vis)
 
     return visited, on_left_side, on_right_side, grid
 
@@ -251,8 +279,19 @@ def compute_depth(area, grid, zero_idx):
     return depth
 
 
+def declutter(origi_grid, visited):
+    for i in range(len(origi_grid)):
+        for j in range(len(origi_grid[i])):
+            if (i, j) not in visited:
+                origi_grid[i][j] = 0
+
+
 def part2(data):
-    visited, on_left_side, on_right_side, origi_grid = find_loop2(data)
+    visited, origi_grid = find_loop(data)
+    start_pos = find_start_coords(origi_grid)
+    declutter(origi_grid, visited)
+    # TODO: change start position grid value to correct one
+    visited, on_left_side, on_right_side, origi_grid = find_loop2(origi_grid, start_pos)
 
     print("on left: {}".format(on_left_side))
     print("on right: {}".format(on_right_side))
@@ -264,12 +303,12 @@ def part2(data):
 
     for pos in on_left_side:
         grid[pos[0]][pos[1]] = 'X'
-    #
+
     # for pos in on_right_side:
     #     grid[pos[0]][pos[1]] = 'Y'
 
     for pos in visited:
-        grid[pos[0]][pos[1]] = '@'
+        grid[pos[0]][pos[1]] = origi_grid[pos[0]][pos[1]]
 
     print_grid(grid)
 
@@ -316,6 +355,17 @@ L--J.L7...LJS7F-7L7.
 .....|FJLJ|FJ|F7|.LJ
 ....FJL-7.||.||||...
 ....L---J.LJ.LJLJ...
+"""
+    testdata6 = """FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L
 """
 
     # print(part1(testdata1))
