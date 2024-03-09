@@ -5,8 +5,8 @@ import numpy as np
 
 from aoc_tools import get_data
 
-debug_part1 = True
-debug_part2 = True
+debug_part1 = False
+debug_part2 = False
 debug_follow_path = False
 
 directions_map = {8: "LEFT", 4: "UP", 2: "RIGHT", 1: "DOWN"}
@@ -16,6 +16,7 @@ direction_masks = {(-1, 0): (4, 1),
                    (0, -1): (8, 2),
                    (0, 1): (2, 8)
                    }
+DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 inverse_char_map = {v: k for k, v in char_map.items()}
 
@@ -114,7 +115,6 @@ def debug_print_follow_path(origi_grid, left_side, right_side, path):
     for p in right_side:
         dbg_grid[p[0]][p[1]] = 'Y'
 
-
     print_grid(dbg_grid)
     print()
 
@@ -126,12 +126,12 @@ def follow_path(path: list, visited, on_left_side: set, on_right_side: set, grid
 
     add_all(left_side, on_left_side)
     add_all(right_side, on_right_side)
-    
+
     debug_print_follow_path(grid, left_side, right_side, path)
 
     position = plus_2d(position, direction)
 
-    for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+    for delta in DIRS:
         if is_adjacent_connected(position, delta, grid):
             new_coords = plus_2d(position, delta)
             if new_coords not in visited:
@@ -286,6 +286,39 @@ def declutter(origi_grid, visited):
                 origi_grid[i][j] = 0
 
 
+def expand_area(limits, start):
+    visited = set()
+    stack = [start]
+    max_i = max([p[0] for p in limits])
+    max_j = max([p[1] for p in limits])
+
+    while len(stack) > 0:
+        pos = stack.pop()
+        if pos[0] < 0 or pos[1] < 0 or pos[0] > max_i or pos[1] > max_j:
+            # definitely outside
+            return None
+        visited.add(pos)
+        for delta in DIRS:
+            next_pos = plus_2d(pos, delta)
+            if next_pos not in limits and next_pos not in visited:
+                stack.append(next_pos)
+
+    return visited
+
+
+
+def find_areas2(limits, starts):
+    result = set()
+    for start in starts:
+        expanded = expand_area(limits, start)
+        if expanded is None:
+            return None
+
+        for x in expanded:
+            result.add(x)
+    return result
+
+
 def part2(data):
     visited, origi_grid = find_loop(data)
     start_pos = find_start_coords(origi_grid)
@@ -293,8 +326,16 @@ def part2(data):
     # TODO: change start position grid value to correct one
     visited, on_left_side, on_right_side, origi_grid = find_loop2(origi_grid, start_pos)
 
-    print("on left: {}".format(on_left_side))
-    print("on right: {}".format(on_right_side))
+    if debug_part2:
+        print("on left: {}".format(on_left_side))
+        print("on right: {}".format(on_right_side))
+
+    left_areas = find_areas2(visited, on_left_side)
+    right_areas = find_areas2(visited, on_right_side)
+
+    return len(left_areas) if left_areas is not None else len(right_areas)
+
+    print(left_areas, right_areas)
 
     grid_size = max(len(origi_grid), len(origi_grid[0]))
     grid = []
@@ -304,8 +345,8 @@ def part2(data):
     for pos in on_left_side:
         grid[pos[0]][pos[1]] = 'X'
 
-    # for pos in on_right_side:
-    #     grid[pos[0]][pos[1]] = 'Y'
+    for pos in on_right_side:
+        grid[pos[0]][pos[1]] = 'Y'
 
     for pos in visited:
         grid[pos[0]][pos[1]] = origi_grid[pos[0]][pos[1]]
@@ -370,10 +411,11 @@ L7JLJL-JLJLJL--JLJ.L
 
     # print(part1(testdata1))
     # print(part1(testdata2))
-    # print(part2(testdata1))
-    # print(part2(testdata3))
-    # print(part2(testdata4))
+    print(part2(testdata1))
+    print(part2(testdata3))
+    print(part2(testdata4))
     print(part2(testdata5))
+    print(part2(testdata6))
 
 
 if __name__ == "__main__":
@@ -381,5 +423,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    # print(part1(input_data))
-    # print(part2(input_data))
+    print(part1(input_data))
+    print(part2(input_data))
