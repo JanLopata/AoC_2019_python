@@ -20,7 +20,14 @@ side_map = {
     (5, (+1, +0)): ([(+0, +1)], [(+0, -1)]),
     (10, (+0, -1)): ([(+1, +0)], [(-1, +0)]),
     (10, (+0, +1)): ([(-1, +0)], [(+1, +0)]),
-    # TODO: continue adding values here
+    (6, (+0, +1)): ([], [(+0, -1), (+1, +0)]),
+    (6, (-1, +0)): ([(+0, -1), (+1, +0)], []),
+    (12, (-1, +0)): ([], [(+0, +1), (+1, +0)]),
+    (12, (+0, -1)): ([(+0, +1), (+1, +0)], []),
+    (9, (+0, -1)): ([], [(+0, +1), (-1, +0)]),
+    (9, (+1, +0)): ([(+0, +1), (-1, +0)], []),
+    (3, (+0, +1)): ([], [(+0, -1), (-1, +0)]),
+    (3, (+1, +0)): ([(+0, -1), (-1, +0)], []),
 }
 
 
@@ -257,13 +264,12 @@ def part2(data):
 
     for pos in on_left_side:
         grid[pos[0]][pos[1]] = 'X'
-
-    for pos in on_right_side:
-        grid[pos[0]][pos[1]] = 'Y'
+    #
+    # for pos in on_right_side:
+    #     grid[pos[0]][pos[1]] = 'Y'
 
     for pos in visited:
         grid[pos[0]][pos[1]] = '@'
-
 
     print_grid(grid)
 
@@ -314,9 +320,10 @@ L--J.L7...LJS7F-7L7.
 
     # print(part1(testdata1))
     # print(part1(testdata2))
-    print(part2(testdata1))
+    # print(part2(testdata1))
+    # print(part2(testdata3))
     # print(part2(testdata4))
-    # print(part2(testdata5))
+    print(part2(testdata5))
 
 
 if __name__ == "__main__":
