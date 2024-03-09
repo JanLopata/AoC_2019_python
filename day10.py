@@ -5,7 +5,7 @@ import numpy as np
 
 from aoc_tools import get_data
 
-debug_part1 = False
+debug_part1 = True
 debug_part2 = True
 
 directions_map = {8: "LEFT", 4: "UP", 2: "RIGHT", 1: "DOWN"}
@@ -15,6 +15,11 @@ direction_masks = {(-1, 0): (4, 1),
                    (0, -1): (8, 2),
                    (0, 1): (2, 8)
                    }
+side_map = {
+    (5, (-1, +0)): ([(+0, -1)], [(+0, +1)]),
+    (5, (+1, +0)): ([(+0, +1)], [(+0, -1)]),
+    # TODO: continue adding values here
+}
 
 
 def remap_char(x):
@@ -56,16 +61,31 @@ def normal_2d(coords):
     return coords[1], -coords[0]
 
 
+def get_left_and_right(pos, here_num, direction):
+    if (here_num, direction) not in side_map:
+        return [], []
+    else:
+        lr = side_map[(here_num, direction)]
+        mytupl = delta_list_plus_position(lr[0], pos), delta_list_plus_position(lr[1], pos)
+        return mytupl
+
+
+def delta_list_plus_position(delta_list, position):
+    return [(position[0] + delta[0], position[1] + delta[1]) for delta in delta_list]
+
+
+def add_all(elements_to_add, target):
+    for to_check in elements_to_add:
+        target.add(to_check)
+
+
 def follow_path(path: list, visited, on_left_side: set, on_right_side: set, grid):
     position, direction = path[-1]
-    # direct
-    normal = normal_2d(direction)
-    on_left = plus_2d(position, normal)
-    on_right = plus_2d(position, invert_2d(normal))
-    if grid[on_left[0]][on_left[1]] == 0:
-        on_left_side.add(on_left)
-    if grid[on_right[0]][on_right[1]] == 0:
-        on_right_side.add(on_right)
+
+    left_side, right_side = get_left_and_right(position, grid[position[0]][position[1]], direction)
+
+    add_all(left_side, on_left_side)
+    add_all(right_side, on_right_side)
 
     position = plus_2d(position, direction)
 
@@ -220,41 +240,21 @@ def compute_depth(area, grid, zero_idx):
 def part2(data):
     visited, on_left_side, on_right_side, origi_grid = find_loop2(data)
 
+    print("on left: {}".format(on_left_side))
+    print("on right: {}".format(on_right_side))
+
     grid_size = max(len(origi_grid), len(origi_grid[0]))
     grid = []
     for i in range(grid_size):
         grid.append(grid_size * [0])
 
-    for coord in visited:
-        grid[coord[0]][coord[1]] = 9
+    for pos in visited:
+        grid[pos[0]][pos[1]] = '@'
 
-    print()
-    print_grid(grid)
-
-    areas = find_areas(grid, grid_size)
-    largest_idx = None
-    largest_size = 0
-    for idx in range(len(areas)):
-        current_size = len(areas[idx])
-        if current_size > largest_size:
-            largest_idx = idx
-            largest_size = current_size
-
-    print("Largest:", largest_idx, largest_size)
-    for coords in areas[largest_idx]:
-        grid[coords[0]][coords[1]] = 0
-
-    considered = on_left_side
     for pos in on_left_side:
-        if pos in areas[largest_idx]:
-            considered = on_right_side
-            break
-
-    for pos in considered:
-        grid[pos[0]][pos[1]] = 'C'
+        grid[pos[0]][pos[1]] = 'X'
 
     print_grid(grid)
-    print(considered)
 
 
 def do_tests():
@@ -304,8 +304,8 @@ L--J.L7...LJS7F-7L7.
     # print(part1(testdata1))
     # print(part1(testdata2))
     print(part2(testdata1))
-    print(part2(testdata4))
-    print(part2(testdata5))
+    # print(part2(testdata4))
+    # print(part2(testdata5))
 
 
 if __name__ == "__main__":
