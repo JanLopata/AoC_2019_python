@@ -103,12 +103,7 @@ def find_loop(data: str):
     if debug_part1:
         print_grid(grid)
 
-    start_coords = None
-    for row in range(len(grid)):
-        for col in range(len(grid[row])):
-            if grid[row][col] == 15:
-                start_coords = (row, col)
-                break
+    start_coords = find_start_coords(grid)
     queue = [start_coords]
     visited = {start_coords: 0}
 
@@ -116,6 +111,13 @@ def find_loop(data: str):
         do_breath_first_on_pipes(queue, visited, grid)
 
     return visited, grid
+
+
+def find_start_coords(grid):
+    for row in range(len(grid)):
+        for col in range(len(grid[row])):
+            if grid[row][col] == 15:
+                return row, col
 
 
 def find_loop2(data):
@@ -132,12 +134,7 @@ def find_loop2(data):
     if debug_part1:
         print_grid(grid)
 
-    start_coords = None
-    for row in range(len(grid)):
-        for col in range(len(grid[row])):
-            if grid[row][col] == 15:
-                start_coords = (row, col)
-                break
+    start_coords = find_start_coords(grid)
     stack = [(start_coords, (0, 0))]
     visited = {start_coords: 0}
 
