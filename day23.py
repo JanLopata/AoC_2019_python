@@ -51,6 +51,13 @@ def add_various_directions(visited: set, pos, next_steps, go_queue):
         go_queue.put((visited_copy, pos, delta, next_pos))
 
 
+def queue_next(go_queue, visited: set, current, target, distance):
+    visited_copy = set()
+    visited_copy.update(visited)
+    visited_copy.add(target)
+    go_queue.put((target, visited_copy, distance))
+
+
 def find_next_steps(visited: set, maze_map: dict, pos_i, pos_j):
     slopes = []
     general = []
@@ -137,17 +144,43 @@ def part1(data):
     return fun
 
 
+def longest_path_on_graph(graph, start, end):
+    longest = 0
+    go_queue = queue.Queue()
+    go_queue.put((start, set(), 0))
+
+    while not go_queue.empty():
+        print(len(go_queue.queue))
+        element = go_queue.get()
+        current, visited, current_distance = element[0], element[1], element[2]
+        if current == end:
+            if debug_part2:
+                print("longest {} reached by {}".format(current_distance, visited))
+            longest = max(longest, current_distance)
+        edges = graph[current]
+        for target in edges:
+            if target in visited:
+                continue
+            distance = current_distance + edges[target]
+            queue_next(go_queue, visited, current, target, distance)
+
+    return longest
+
+
 def part2(data):
     updated_data = data.replace("^", ".").replace("v", ".").replace("<", ".").replace(">", ".")
     # print(updated_data)
 
     maze_map, maze_dimensions = read_maze(data)
     start = (0, 1)
+    end = (maze_dimensions[0], maze_dimensions[1] - 1)
     graph = convert_to_graph(maze_map, start)
-    print(graph)
-    for key in graph:
-        maze_map[key] = '*'
-    print_maze(maze_map, maze_dimensions, set())
+    # print(graph)
+    # for key in graph:
+    #     maze_map[key] = '*'
+    # print_maze(maze_map, maze_dimensions, set())
+
+    return longest_path_on_graph(graph, start, end)
 
 
 def add_edge(graph, source, target, distance):
@@ -252,7 +285,7 @@ def do_tests():
 #####################.#
 """
 
-    print(part1(testdata1))
+    # print(part1(testdata1))
     print(part2(testdata1))
 
 
@@ -261,5 +294,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    print(part1(input_data))
-    print(part2(input_data))
+    # print(part1(input_data))
+    # print(part2(input_data))
