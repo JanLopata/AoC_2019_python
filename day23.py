@@ -3,8 +3,8 @@ import queue
 
 from aoc_tools import get_data
 
-debug_part1 = False
-debug_part2 = False
+debug_part1 = True
+debug_part2 = True
 
 SLOPE_MAP = {">": (0, 1), "<": (0, -1), "^": (-1, 0), "v": (1, 0)}
 DIRS = SLOPE_MAP.values()
@@ -144,27 +144,36 @@ def part1(data):
     return fun
 
 
-def longest_path_on_graph(graph, start, end):
-    longest = 0
-    go_queue = queue.Queue()
-    go_queue.put((start, set(), 0))
+def construct_visited(nodes, graph):
+    result = set()
+    for i in range(1, len(nodes)):
+        start = nodes[i - 1]
+        target = nodes[i]
+        edge_points = graph[start][target][0]
+        result.update(edge_points)
+    return result
 
-    while not go_queue.empty():
-        print(len(go_queue.queue))
-        element = go_queue.get()
-        current, visited, current_distance = element[0], element[1], element[2]
-        if current == end:
-            if debug_part2:
-                print("longest {} reached by {}".format(current_distance, visited))
-            longest = max(longest, current_distance)
-        edges = graph[current]
-        for target in edges:
-            if target in visited:
-                continue
-            distance = current_distance + edges[target]
-            queue_next(go_queue, visited, current, target, distance)
 
-    return longest
+def all_paths_through_graph(maze, graph, start, end, nodes, visited: set, result):
+    print("Go from {} to {}, {} steps yet".format(start, end, len(nodes)))
+    if start == end:
+        result.append([x for x in nodes])
+        if debug_part2:
+            painted = construct_visited(nodes, graph)
+            print_maze(maze[0], maze[1], painted)
+        return
+
+    edges = graph[start]
+    viable = [x for x in edges if x not in visited]
+    print(len(nodes), viable)
+    for target in viable:
+        visited.add(target)
+        nodes.append(target)
+
+        all_paths_through_graph(maze, graph, target, end, nodes, visited, result)
+
+        visited.remove(target)
+        nodes = nodes[:-1]
 
 
 def part2(data):
@@ -180,14 +189,16 @@ def part2(data):
     #     maze_map[key] = '*'
     # print_maze(maze_map, maze_dimensions, set())
 
-    return longest_path_on_graph(graph, start, end)
+    result = []
+    all_paths_through_graph((maze_map, maze_dimensions), graph, start, end, [start], set(), result)
+    print(result)
 
 
-def add_edge(graph, source, target, distance):
+def add_edge(graph, source, target, path, distance):
     if source not in graph:
         graph[source] = {}
 
-    graph[source][target] = distance
+    graph[source][target] = path, distance
 
 
 def apply_symmetry(graph):
@@ -195,10 +206,11 @@ def apply_symmetry(graph):
     for source in graph:
         edges_map = graph[source]
         for target in edges_map:
-            edges_to_add.append((target, source, edges_map[target]))
+            path, distance = edges_map[target]
+            edges_to_add.append((target, source, path, distance))
 
-    for source, target, distance in edges_to_add:
-        add_edge(graph, source, target, distance)
+    for source, target, path, distance in edges_to_add:
+        add_edge(graph, source, target, path, distance)
 
 
 def convert_to_graph(maze_map, start_point):
@@ -212,10 +224,10 @@ def convert_to_graph(maze_map, start_point):
         element = go_queue.get()
         start = element[0]
         previous_for_graph = element[1]
-        next_position, distance = crawl_to_next(visited, start, maze_map)
+        next_position, path, distance = crawl_to_next(visited, start, maze_map)
         if next_position is not None:
             # maze_map[next_position] = '*'
-            add_edge(graph, previous_for_graph, next_position, distance)
+            add_edge(graph, previous_for_graph, next_position, path, distance)
             next_starts = find_unvisited_allowed(maze_map, visited, next_position)
             for next_start in next_starts:
                 go_queue.put((next_start, next_position))
@@ -245,18 +257,20 @@ def find_unvisited_allowed(maze_map, visited, start):
 def crawl_to_next(visited, start, maze_map):
     # should return next interesting point and distance to it
     visited.add(start)
+    path = []
 
     distance = 0
     next_step = None
     next_steps = find_unvisited_allowed(maze_map, visited, start)
+    visited.add(start)
     while len(next_steps) == 1:
-        visited.add(start)
         distance += 1
         next_step = next_steps[0]
+        path.append(next_step)
         visited.add(next_step)
         next_steps = find_unvisited_allowed(maze_map, visited, next_step)
 
-    return next_step, distance
+    return next_step, path, distance
 
 
 def do_tests():
