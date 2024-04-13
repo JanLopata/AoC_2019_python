@@ -77,23 +77,54 @@ def part1(data):
     return len(collisions)
 
 
+def compute_derivative(current_guess, balls):
+    derivative = []
+    for j in range(3):
+        derivative.append(derivative_by_constant_part(current_guess, balls, j))
+    for j in range(3):
+        derivative.append(derivative_by_linear_part(current_guess, balls, j))
+    for i in range(len(balls)):
+        derivative.append(derivative_by_time_part(current_guess, balls, i))
+
+    return derivative
+
+
+def minimize_error(balls):
+    problem_size = 6 + len(balls)
+    current_guess = [2. for _ in range(problem_size)]
+    error = error_function(current_guess, balls)
+    derivative = compute_derivative(current_guess, balls)
+    step = 0.001
+    counter = 0
+
+    while abs(error) > 0.001:
+        counter += 1
+
+        for j in range(len(derivative)):
+            current_guess[j] -= step * derivative[j]
+
+        error = error_function(current_guess, balls)
+        derivative = compute_derivative(current_guess, balls)
+
+        if counter % 10000 == 0:
+            print(current_guess, error, derivative)
+
+    print(current_guess)
+    print(error)
+    print(derivative)
+    return current_guess
+
+
 def part2(data):
     balls = []
     for line in data.splitlines():
         balls.append(parse_snowball(line))
 
-    print(balls)
-    problem_size = 6 + len(balls)
-    current_guess = [2. for _ in range(problem_size)]
-
-    err = error_function(current_guess, balls)
-    print(current_guess, err)
-    derivative = [derivative_by_constant_part(current_guess, balls, j) for j in range(3)]
-    print(derivative)
-    derivative = [derivative_by_linear_part(current_guess, balls, j) for j in range(3)]
-    print(derivative)
-    derivative = [derivative_by_time_part(current_guess, balls, i) for i in range(len(balls))]
-    print(derivative)
+    minimum = minimize_error(balls)
+    rounded_guess = [round(x) for x in minimum]
+    print(rounded_guess)
+    print(error_function(rounded_guess, balls))
+    return rounded_guess[0] + rounded_guess[1] + rounded_guess[2]
 
 
 def error_function(current_guess, balls):
