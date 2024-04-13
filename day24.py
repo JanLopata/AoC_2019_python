@@ -1,6 +1,7 @@
 import os
 
 import numpy.linalg
+import scipy
 
 from aoc_tools import get_data
 
@@ -94,25 +95,10 @@ def minimize_error(balls):
     derivative = compute_derivative(current_guess, balls)
     step = 0.001
     counter = 0
-    # scipy.optimize.minimize()
+    result = scipy.optimize.minimize(fun=lambda x: error_function(x, balls), x0=numpy.zeros(problem_size), jac=lambda x: compute_derivative(x, balls))
 
-    while abs(error) > 0.001:
-        counter += 1
-
-        # for j in range(len(derivative)):
-        #     current_guess[j] -= step * derivative[j]
-        current_guess = current_guess - step * derivative
-
-        error = error_function(current_guess, balls)
-        derivative = compute_derivative(current_guess, balls)
-
-        if counter % 10000 == 0 or counter < 100:
-            print(current_guess, error, derivative)
-
-    print(current_guess)
-    print(error)
-    print(derivative)
-    return current_guess
+    print(result)
+    return result.get('x')
 
 
 def part2(data):
@@ -193,4 +179,4 @@ if __name__ == "__main__":
     do_tests()
 
     # print(part1(input_data))
-    # print(part2(input_data))
+    print(part2(input_data))
