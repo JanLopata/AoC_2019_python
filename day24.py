@@ -78,7 +78,70 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    balls = []
+    for line in data.splitlines():
+        balls.append(parse_snowball(line))
+
+    print(balls)
+    problem_size = 6 + len(balls)
+    current_guess = [2. for _ in range(problem_size)]
+
+    err = error_function(current_guess, balls)
+    print(current_guess, err)
+    derivative = [derivative_by_constant_part(current_guess, balls, j) for j in range(3)]
+    print(derivative)
+    derivative = [derivative_by_linear_part(current_guess, balls, j) for j in range(3)]
+    print(derivative)
+    derivative = [derivative_by_time_part(current_guess, balls, i) for i in range(len(balls))]
+    print(derivative)
+
+
+def error_function(current_guess, balls):
+    t_values = current_guess[6:]
+    error_value = 0
+    for i in range(len(balls)):
+        for j in range(3):
+            ball = balls[i]
+            bt = ball[0][j] + ball[1][j] * t_values[i]
+            gt = current_guess[j] + current_guess[j + 3] * t_values[i]
+            err = bt - gt
+            error_value += err * err
+
+    return error_value
+
+
+def derivative_by_constant_part(current_guess, balls, j):
+    t_values = current_guess[6:]
+    derivative = 0
+    for i in range(len(balls)):
+        ball = balls[i]
+        diff = -2 * (ball[0][j] - current_guess[j] + t_values[i] * (ball[1][j] - current_guess[j + 3]))
+        derivative += diff
+
+    return derivative
+
+
+def derivative_by_linear_part(current_guess, balls, j):
+    t_values = current_guess[6:]
+    derivative = 0
+    for i in range(len(balls)):
+        ball = balls[i]
+        diff = -2 * t_values[i] * (ball[0][j] - current_guess[j] + t_values[i] * (ball[1][j] - current_guess[j + 3]))
+        derivative += diff
+
+    return derivative
+
+
+def derivative_by_time_part(current_guess, balls, i):
+    t_values = current_guess[6:]
+    derivative = 0
+    ball = balls[i]
+    for j in range(3):
+        diff = 2 * (ball[1][j] - current_guess[j + 3]) * \
+               (ball[0][j] - current_guess[j] + t_values[i] * (ball[1][j] - current_guess[j + 3]))
+        derivative += diff
+
+    return derivative
 
 
 def do_tests():
@@ -89,7 +152,7 @@ def do_tests():
 20, 19, 15 @  1, -5, -3
 """
 
-    print(part1(testdata1))
+    # print(part1(testdata1))
     print(part2(testdata1))
 
 
@@ -98,5 +161,5 @@ if __name__ == "__main__":
 
     do_tests()
 
-    print(part1(input_data))
+    # print(part1(input_data))
     # print(part2(input_data))
