@@ -78,35 +78,35 @@ def part1(data):
 
 
 def compute_derivative(current_guess, balls):
-    derivative = []
-    for j in range(3):
-        derivative.append(derivative_by_constant_part(current_guess, balls, j))
-    for j in range(3):
-        derivative.append(derivative_by_linear_part(current_guess, balls, j))
-    for i in range(len(balls)):
-        derivative.append(derivative_by_time_part(current_guess, balls, i))
+    derivative = numpy.zeros(shape=6 + len(balls))
+    derivative[0:3] = [derivative_by_constant_part(current_guess, balls, j) for j in range(3)]
+    derivative[3:6] = [derivative_by_linear_part(current_guess, balls, j) for j in range(3)]
+    derivative[6:] = [derivative_by_time_part(current_guess, balls, i) for i in range(len(balls))]
 
     return derivative
 
 
 def minimize_error(balls):
     problem_size = 6 + len(balls)
-    current_guess = [2. for _ in range(problem_size)]
+
+    current_guess = numpy.zeros(problem_size)
     error = error_function(current_guess, balls)
     derivative = compute_derivative(current_guess, balls)
     step = 0.001
     counter = 0
+    # scipy.optimize.minimize()
 
     while abs(error) > 0.001:
         counter += 1
 
-        for j in range(len(derivative)):
-            current_guess[j] -= step * derivative[j]
+        # for j in range(len(derivative)):
+        #     current_guess[j] -= step * derivative[j]
+        current_guess = current_guess - step * derivative
 
         error = error_function(current_guess, balls)
         derivative = compute_derivative(current_guess, balls)
 
-        if counter % 10000 == 0:
+        if counter % 10000 == 0 or counter < 100:
             print(current_guess, error, derivative)
 
     print(current_guess)
