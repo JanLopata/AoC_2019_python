@@ -3,33 +3,52 @@ import os
 from aoc_tools import get_data
 
 
-def compute_fuel_req(mass: int):
-    return int(mass / 3) - 2
-
-
-def compute_combined_fuel_req(mass):
-    result = 0
-    increment = compute_fuel_req(mass)
-    while increment > 0:
-        result += increment
-        increment = compute_fuel_req(increment)
-    return result
-
-
 def part1(data: str):
-    result = 0
+    dial = 50
+    zeros = 0
     for line in data.splitlines():
-        result += compute_fuel_req(int(line))
+        if len(line) == 0:
+            continue
+        num = int(line[1:])
+        if line.startswith("L"):
+            diff = - num
+        else:
+            diff = num
 
-    return result
+        dial += diff
+        dial %= 100
+        if dial == 0:
+            zeros += 1
+
+    return zeros
 
 
 def part2(data: str):
-    result = 0
+    dial = 50
+    zeros = 0
     for line in data.splitlines():
-        result += compute_combined_fuel_req(int(line))
+        if len(line) == 0:
+            continue
 
-    return result
+        num = int(line[1:])
+        if line.startswith("L"):
+            diff = - num
+        else:
+            diff = num
+
+        previous = dial
+        dial += diff
+        clicks = abs(dial) // 100
+        if previous * dial < 0 or dial == 0:
+            clicks += 1
+        dial %= 100
+
+
+        zeros += clicks
+
+        print(line, dial, clicks)
+
+    return zeros
 
 
 if __name__ == "__main__":
