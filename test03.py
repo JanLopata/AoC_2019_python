@@ -1,25 +1,21 @@
 import unittest
 
-from parameterized import parameterized
+import day03
 
-import day03 as day
-
+test_data = """
+987654321111111
+811111111111119
+234234234234278
+818181911112111
+"""
 
 class AoCTest(unittest.TestCase):
 
-    @parameterized.expand([
-        ["R8,U5,L5,D3\nU7,R6,D4,L4", 6],
-        ["R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83", 159],
-        ["R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7", 135]])
-    def test_part1(self, wires, expected):
-        self.assertEqual(expected, day.part1(wires))
+    def test_part1(self):
+        self.assertEqual(357, day03.part1(test_data))
 
-    @parameterized.expand([
-        ["R8,U5,L5,D3\nU7,R6,D4,L4", 30],
-        ["R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83", 610],
-        ["R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7", 410]])
-    def test_part2(self, wires, expected):
-        self.assertEqual(expected, day.part2(wires))
+    def test_part2(self):
+        self.assertEqual(3121910778619, day03.part2(test_data))
 
 
 if __name__ == '__main__':
