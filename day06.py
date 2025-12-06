@@ -1,58 +1,67 @@
 import os
 
+from aoc_tools import get_data
+
+
+def parse_numbers(line: str, numbers: list[list[int]] | None):
+    row_numbers = [int(x) for x in line.split()]
+    for i in range(len(row_numbers)):
+        numbers[i].append(row_numbers[i])
+
+    return numbers
+
+
+def initialize_numbers(data):
+    first_line = data.splitlines()[0]
+    numbers = []
+    for _ in first_line.split():
+        numbers.append([])
+    return numbers
+
+
+def parse_data(data):
+    numbers = initialize_numbers(data)
+    operators = []
+
+    for line in data.splitlines():
+        if "+" in line or "*" in line:
+            parse_operators(line, operators)
+        else:
+            numbers = parse_numbers(line, numbers)
+
+    return numbers, operators
+
+
+def parse_operators(line, operations):
+    for op in line.split():
+        operations.append(op)
+
 
 def part1(data: str):
-    direct_orbit_map = parse_direct_orbit_map(data)
+    result = 0
+    numbers, operators = parse_data(data)
+    for col_i in range(len(numbers)):
+        if operators[col_i] == "+":
+            operation = lambda x, y: x + y
+            neutral = 0
+        else:
+            operation = lambda x, y: x * y
+            neutral = 1
 
-    counter = 0
-    for start in direct_orbit_map.keys():
-        counter += len(get_full_path(start, direct_orbit_map)) - 1
-    return counter
+        col_result = neutral
+        for num in numbers[col_i]:
+            col_result = operation(col_result, num)
+        result += col_result
 
-
-def parse_direct_orbit_map(data):
-    direct_orbit_map = {}
-    for row in data.split("\n"):
-        if len(row) == 0:
-            continue
-        orbit_info = row.split(")")
-        direct_orbit_map[orbit_info[1]] = orbit_info[0]
-    return direct_orbit_map
-
-
-def get_full_path(start, direct_orbit_map):
-    pointer = start
-    path = []
-    while pointer in direct_orbit_map:
-        path.append(pointer)
-        pointer = direct_orbit_map[pointer]
-
-    path.append(pointer)
-    return path
+    return result
 
 
 def part2(data: str):
-    direct_orbit_map = parse_direct_orbit_map(data)
-
-    you_path = get_full_path("YOU", direct_orbit_map)
-    san_path = get_full_path("SAN", direct_orbit_map)
-
-    while you_path[-1] == san_path[-1]:
-        you_path.pop()
-        san_path.pop()
-
-    return len(you_path) + len(san_path) - 2
-
-
-def read_data():
-    with open(input_filename) as input_file:
-        return input_file.read()
+    pass
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    data = read_data()
+    input_data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
-    print(part2(data))
+    print(part1(input_data))
+    print(part2(input_data))
