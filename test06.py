@@ -15,7 +15,7 @@ class AoCTest(unittest.TestCase):
         self.assertEqual(4277556, day06.part1(test_data))
 
     def test_part2(self):
-        self.assertEqual(0, day06.part2(test_data))
+        self.assertEqual(3263827, day06.part2(test_data))
 
 
 if __name__ == '__main__':

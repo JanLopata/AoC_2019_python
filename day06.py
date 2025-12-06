@@ -41,12 +41,7 @@ def part1(data: str):
     result = 0
     numbers, operators = parse_data(data)
     for col_i in range(len(numbers)):
-        if operators[col_i] == "+":
-            operation = lambda x, y: x + y
-            neutral = 0
-        else:
-            operation = lambda x, y: x * y
-            neutral = 1
+        neutral, operation = get_operation(operators[col_i])
 
         col_result = neutral
         for num in numbers[col_i]:
@@ -56,8 +51,56 @@ def part1(data: str):
     return result
 
 
+def get_operation(symbol):
+    if symbol == "+":
+        operation = lambda x, y: x + y
+        neutral = 0
+    else:
+        operation = lambda x, y: x * y
+        neutral = 1
+    return neutral, operation
+
+
+def parse_data_backwards(data):
+    backwards = []
+    for line in data.splitlines():
+        backwards.append(line[::-1])
+
+    cols = len(backwards[0])
+    rows = len(backwards)
+
+    current_numbers = []
+    skip = False
+    for col in range(cols):
+        if skip:
+            skip = False
+            continue
+
+        current_number = 0
+        for row in range(rows - 1):
+            symbol = backwards[row][col]
+            if symbol != " ":
+                digit = int(symbol)
+                current_number = current_number * 10 + digit
+
+        current_numbers.append(current_number)
+
+        operator_symbol = backwards[-1][col]
+        if operator_symbol in ["+", "*"]:
+            yield current_numbers, operator_symbol
+            current_numbers = []
+            skip = True
+
+
 def part2(data: str):
-    pass
+    result = 0
+    for numbers, operator in parse_data_backwards(data):
+        neutral, operation = get_operation(operator)
+        tmp = neutral
+        for num in numbers:
+            tmp = operation(tmp, num)
+        result += tmp
+    return result
 
 
 if __name__ == "__main__":
