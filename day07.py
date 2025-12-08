@@ -26,8 +26,66 @@ def part1(data: str):
     return len(removed_beams)
 
 
+def find_divider_under(top: tuple[int, int], dividers: dict):
+    i, depth = top
+    if i in dividers:
+        for d in dividers[i]:
+            if d > depth:
+                return i, d
+    return None
+
+
 def part2(data: str):
-    pass
+    start, dividers = parse_dividers(data)
+
+    stack = [find_divider_under((start, 0), dividers)]
+    memory = dict()
+
+    while len(stack) > 0:
+        top = stack[-1]
+        if top in memory:
+            stack.pop()
+            continue
+
+        known = []
+        for delta in [-1, 1]:
+            k = (top[0] + delta, top[1])
+            divider_under = find_divider_under(k, dividers)
+
+            if divider_under is None:
+                known.append(1)
+                memory[k] = 1
+            else:
+                if divider_under in memory:
+                    known.append(memory[divider_under])
+                else:
+                    stack.append(divider_under)
+
+        if len(known) == 2:
+            memory[top] = sum(known)
+
+    return memory[find_divider_under((start, 0), dividers)]
+
+
+def parse_dividers(data):
+    start = -1
+    line_number = 0
+    dividers = dict()
+    for line in data.splitlines():
+
+        for i in range(len(line)):
+            ch = line[i]
+            if ch == "S":
+                start = i
+            if ch != '^':
+                continue
+
+            if i in dividers:
+                dividers[i].append(line_number)
+            else:
+                dividers[i] = [line_number]
+        line_number += 1
+    return start, dividers
 
 
 if __name__ == "__main__":
