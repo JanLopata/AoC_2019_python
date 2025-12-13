@@ -3,6 +3,7 @@ import os
 from aoc_tools import get_data
 
 INFINITY = 1e20
+CACHE_SIZE = 1000
 
 
 def parse_row(row: str):
@@ -18,20 +19,33 @@ def compute_distance_square(point_a, point_b):
     return dist_square
 
 
+def get_lowest_from_cache(lowest_cache:list):
+    cached = lowest_cache.pop(0)
+    return cached[0], cached[1], cached[2]
+
 def find_shortest_distance(d_matrix):
-    minimum = INFINITY
-    arg_min = None
+    lowest_cache = [(INFINITY, None, None)]
+
     for i in range(len(d_matrix)):
         row = d_matrix[i]
-        for j in range(len(row)):
-            if i == j:
-                continue
-            # TODO: optimize
-            if row[j] < minimum:
-                arg_min = i, j
-                minimum = row[j]
+        for j in range(i + 1, len(row)):
+            add_to_lowest_if_possible(row[j], i, j, lowest_cache)
 
-    return arg_min[0], arg_min[1], minimum
+    lowest = get_lowest_from_cache(lowest_cache)
+
+    return lowest[0], lowest[1], lowest[2], lowest_cache
+
+
+def add_to_lowest_if_possible(value, idx1, idx2, cache: list):
+    # cache structure can be better, let's use list for now
+    for i in range(len(cache)):
+        current_value = cache[i][0]
+        if value < current_value:
+            cache.insert(i, (value, idx1, idx2))
+            if len(cache) > CACHE_SIZE:
+                cache.pop()
+
+            return
 
 
 def add_edge(circuits: dict[int, set[int]], idx1, idx2):
@@ -68,10 +82,15 @@ def part1(data: str, iterations):
         circuits[i] = set()
         circuits[i].add(i)
 
+    lowest_cache = []
+
     for k in range(iterations):
-        idx1, idx2, distance = find_shortest_distance(d_matrix)
+        if len(lowest_cache) > 0:
+            distance, idx1, idx2 = get_lowest_from_cache(lowest_cache)
+        else:
+            distance, idx1, idx2, lowest_cache = find_shortest_distance(d_matrix)
         add_edge(circuits, idx1, idx2)
-        # debug_circuits(circuits, idx1, idx2, k, d_matrix, points)
+        debug_circuits(circuits, idx1, idx2, k, d_matrix, points)
         remove_edge(d_matrix, idx1, idx2)
 
     unique_circuits = get_unique_circuits(circuits)
@@ -86,9 +105,9 @@ def debug_circuits(circuits, idx1, idx2, k, d_matrix, points):
         k + 1, idx1, idx2, d_matrix[idx1][idx2], points[idx1], points[idx2]))
     unique_circuit_lengths = [len(x) for x in unique_circuits]
     unique_circuit_lengths.sort(reverse=True)
-    print("unique circuit sizes: {}".format(unique_circuit_lengths))
-    for c in unique_circuits:
-        print(c)
+    # print("unique circuit sizes: {}".format(unique_circuit_lengths))
+    # for c in unique_circuits:
+    #     print(c)
 
     return unique_circuits
 
