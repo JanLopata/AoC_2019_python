@@ -19,9 +19,10 @@ def compute_distance_square(point_a, point_b):
     return dist_square
 
 
-def get_lowest_from_cache(lowest_cache:list):
+def get_lowest_from_cache(lowest_cache: list):
     cached = lowest_cache.pop(0)
     return cached[0], cached[1], cached[2]
+
 
 def find_shortest_distance(d_matrix):
     lowest_cache = [(INFINITY, None, None)]
@@ -131,7 +132,40 @@ def is_known_set(circuit: set[int], known_points):
 
 
 def part2(data: str):
-    pass
+    rows = data.splitlines()
+    points = [parse_row(row) for row in rows]
+
+    d_matrix = []
+    for i in range(len(points)):
+        matrix_row = []
+        for j in range(len(points)):
+            distance = compute_distance_square(points[i], points[j])
+            matrix_row.append(distance)
+        d_matrix.append(matrix_row)
+
+    circuits = dict()
+    for i in range(len(points)):
+        circuits[i] = set()
+        circuits[i].add(i)
+
+    lowest_cache = []
+    unique_circuits = get_unique_circuits(circuits)
+
+    k = 0
+    latest = None
+    while len(unique_circuits) > 1:
+        if len(lowest_cache) > 0:
+            distance, idx1, idx2 = get_lowest_from_cache(lowest_cache)
+        else:
+            distance, idx1, idx2, lowest_cache = find_shortest_distance(d_matrix)
+        add_edge(circuits, idx1, idx2)
+        debug_circuits(circuits, idx1, idx2, k, d_matrix, points)
+        remove_edge(d_matrix, idx1, idx2)
+        unique_circuits = get_unique_circuits(circuits)
+        latest = idx1, idx2
+        k += 1
+
+    return points[latest[0]][0] * points[latest[1]][0]
 
 
 if __name__ == "__main__":
