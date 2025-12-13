@@ -1,93 +1,122 @@
 import os
 
+from aoc_tools import get_data
 
-def part1(data: str, x_size=25, y_size=6):
-    full_ints = [int(x) for x in data]
-    layers = read_layers(full_ints, x_size, y_size)
-
-    zeros_count = [count_given_number(layer, 0) for layer in layers]
-    arg_min_zeros = zeros_count.index(min(zeros_count))
-    least_zeros_layer = layers[arg_min_zeros]
-
-    return count_given_number(least_zeros_layer, 1) * count_given_number(least_zeros_layer, 2)
+INFINITY = 1e20
 
 
-def read_layers(full_ints, x_size, y_size):
-    layers = []
-    layer_number = 0
-    y_number = 0
-    x_number = -1
-    for i in range(len(full_ints)):
-        x_number += 1
-        if x_number >= x_size:
-            x_number = 0
-            y_number += 1
-
-        if y_number >= y_size:
-            y_number = 0
-            layer_number += 1
-
-        if len(layers) <= layer_number:
-            layers.append(init_layer(x_size, y_size))
-        # print("{}, {}, {}, num={}".format(layer_number, y_number, x_number, full_ints[i]))
-
-        layers[layer_number][y_number][x_number] = full_ints[i]
-    return layers
+def parse_row(row: str):
+    sp = row.split(",")
+    return [int(i) for i in sp]
 
 
-def count_given_number(layer, target):
-    result = 0
-    for row in layer:
-        for val in row:
-            result += val == target
-    return result
+def compute_distance_square(point_a, point_b):
+    dist_square = 0
+    for i in range(len(point_a)):
+        diff = (point_b[i] - point_a[i])
+        dist_square += diff * diff
+    return dist_square
 
 
-def init_layer(x_size, y_size):
-    layer = []
-    for y in range(y_size):
-        layer.append([-1 for x in range(x_size)])
-    return layer
+def find_shortest_distance(d_matrix):
+    minimum = INFINITY
+    arg_min = None
+    for i in range(len(d_matrix)):
+        row = d_matrix[i]
+        for j in range(len(row)):
+            if i == j:
+                continue
+            # TODO: optimize
+            if row[j] < minimum:
+                arg_min = i, j
+                minimum = row[j]
+
+    return arg_min[0], arg_min[1], minimum
 
 
-def render_layers(layers, x_size, y_size):
-    layer = layers[0]
-    for c in range(1, len(layers)):
-        layer_com = layers[c]
-        for x in range(x_size):
-            for y in range(y_size):
-                if (layer[y][x] == 2):
-                    layer[y][x] = layer_com[y][x]
+def add_edge(circuits: dict[int, set[int]], idx1, idx2):
+    circ1 = circuits[idx1]
+    circ2 = circuits[idx2]
 
-    return layer
+    if circ1 == circ2:
+        return
 
-
-def part2(data: str, x_size=25, y_size=6):
-    full_ints = [int(x) for x in data]
-    layers = read_layers(full_ints, x_size, y_size)
-
-    result_layer = render_layers(layers, x_size, y_size)
-    result_text = ""
-    for row in result_layer:
-        for val in row:
-            if val == 1:
-                result_text += "*"
-            else:
-                result_text += " "
-        result_text += "\n"
-
-    return result_text
+    union = circ1.union(circ2)
+    for idx in union:
+        circuits[idx] = union
 
 
-def read_data():
-    with open(input_filename) as input_file:
-        return input_file.read()
+def remove_edge(d_matrix, idx1, idx2):
+    d_matrix[idx1][idx2] = INFINITY
+    d_matrix[idx2][idx1] = INFINITY
+
+
+def part1(data: str, iterations):
+    rows = data.splitlines()
+    points = [parse_row(row) for row in rows]
+
+    d_matrix = []
+    for i in range(len(points)):
+        matrix_row = []
+        for j in range(len(points)):
+            distance = compute_distance_square(points[i], points[j])
+            matrix_row.append(distance)
+        d_matrix.append(matrix_row)
+
+    circuits = dict()
+    for i in range(len(points)):
+        circuits[i] = set()
+        circuits[i].add(i)
+
+    for k in range(iterations):
+        idx1, idx2, distance = find_shortest_distance(d_matrix)
+        add_edge(circuits, idx1, idx2)
+        # debug_circuits(circuits, idx1, idx2, k, d_matrix, points)
+        remove_edge(d_matrix, idx1, idx2)
+
+    unique_circuits = get_unique_circuits(circuits)
+    unique_circuits_lengths = [len(x) for x in unique_circuits]
+    unique_circuits_lengths.sort(reverse=True)
+    return unique_circuits_lengths[0] * unique_circuits_lengths[1] * unique_circuits_lengths[2]
+
+
+def debug_circuits(circuits, idx1, idx2, k, d_matrix, points):
+    unique_circuits = get_unique_circuits(circuits)
+    print("Step {} - connecting {} -> {}, squared {}, [{} - {}]".format(
+        k + 1, idx1, idx2, d_matrix[idx1][idx2], points[idx1], points[idx2]))
+    unique_circuit_lengths = [len(x) for x in unique_circuits]
+    unique_circuit_lengths.sort(reverse=True)
+    print("unique circuit sizes: {}".format(unique_circuit_lengths))
+    for c in unique_circuits:
+        print(c)
+
+    return unique_circuits
+
+
+def get_unique_circuits(circuits):
+    known_points = set()
+    unique_circuits = []
+    for circuit in circuits.values():
+        if not is_known_set(circuit, known_points):
+            unique_circuits.append(circuit)
+            for idx in circuit:
+                known_points.add(idx)
+    return unique_circuits
+
+
+def is_known_set(circuit: set[int], known_points):
+    for idx in circuit:
+        if idx in known_points:
+            return True
+    return False
+
+
+def part2(data: str):
+    pass
 
 
 if __name__ == "__main__":
-    this_filename = os.path.basename(__file__)
-    input_filename = os.path.join("input", this_filename.replace("day", "").replace(".py", ".txt"))
-    data = read_data()
+    input_data = get_data(os.path.basename(__file__))
 
-    print(part1(data))
-    print(part2(data))
+    print(part1(input_data, 1000))
+    print(part2(input_data))
