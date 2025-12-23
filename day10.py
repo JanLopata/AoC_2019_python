@@ -3,21 +3,32 @@ import os
 from aoc_tools import get_data
 
 
-def interpret_indicator(x):
-    if x == "#":
-        return 1
-    else:
-        return 0
+def indicators_to_number(indicators_str: str):
+    result = 0
+    revers = indicators_str[::-1]
+    for c in revers:
+        result *= 2
+        if c == "#":
+            result += 1
+    return result
+
+
+def mask_indices_to_number(mask_indices: list[str]):
+    result = 0
+    for str_idx in mask_indices:
+        idx = int(str_idx)
+        result += 2 ** idx
+    return result
 
 
 def parse_line(line):
-
     sp = line.split()
-    indicators = [interpret_indicator(x) for x in sp[0][1:-1]]
+    indicators = indicators_to_number(sp[0][1:-1])
     buttons = []
     for button_source in sp[1:-1]:
-        wiring = [int(x) for x in button_source[1:-1].split(",")]
-        buttons.append(wiring)
+        mask_indices = button_source[1:-1].split(",")
+        mask = mask_indices_to_number(mask_indices)
+        buttons.append(mask)
 
     return indicators, buttons, None
 
@@ -25,8 +36,7 @@ def parse_line(line):
 def part1(data: str):
     for line in data.splitlines():
         indicators, wiring, _ = parse_line(line)
-
-
+        print(indicators, wiring)
 
     return 0
 
