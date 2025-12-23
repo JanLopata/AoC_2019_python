@@ -14,9 +14,15 @@ class AoCTest(unittest.TestCase):
     def test_apply_switch(self):
         self.assertEqual(2 ** 3 + 2 ** 4, toggle_by_mask(1, 63, 2 ** 0 + 2 ** 3 + 2 ** 4))
 
-    def test_two_steps(self):
+    def test_first_example(self):
         first_step = toggle_by_mask(6, 15, 2**0 + 2**2)
         second_step = toggle_by_mask(first_step, 15, 2**0 + 2**1)
+        self.assertEqual(0, second_step)
+
+    def test_third_example(self):
+        all_bits = 63
+        first_step = toggle_by_mask(46, all_bits, 25)
+        second_step = toggle_by_mask(first_step, all_bits, 55)
         self.assertEqual(0, second_step)
 
     def test_part1(self):

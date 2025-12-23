@@ -43,26 +43,44 @@ def toggle_by_mask(indicators, all_bits_on, mask):
     return without_masked + toggled
 
 
-def find_target_by_applying_masks(indicators, target, masks):
-    work_queue = []
-    for mask in masks:
-        switch_result = toggle_by_mask(indicators, target, mask)
-        work_queue.append(([indicators, switch_result], mask))
-        print(work_queue[-1])
+def find_target_by_applying_masks(starting_position, all_ons, masks):
+    known_values = set()
+    work_queue = [(starting_position, [])]
 
-    # while len(work_queue) > 0:
+    while len(work_queue) > 0:
+        head = work_queue.pop()
+        indicators = head[0]
+        if indicators == 0:
+            print(head)
+            return len(head[1])
+
+        for mask in masks:
+            toggle_result = toggle_by_mask(indicators, all_ons, mask)
+            if toggle_result in known_values:
+                continue
+            else:
+                known_values.add(toggle_result)
+
+            progress = head[1][::]
+            progress.append(mask)
+
+            work_queue.append((toggle_result, progress))
+
+
+
 
 
 
 
 
 def part1(data: str):
+    result = 0
     for line in data.splitlines():
         indicators, target, wiring, _ = parse_line(line)
         print(indicators, target, wiring)
-        find_target_by_applying_masks(indicators, target, wiring)
+        result += find_target_by_applying_masks(indicators, target, wiring)
 
-    return 0
+    return result
 
 
 def part2(data: str):
