@@ -8,6 +8,8 @@ test_data = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
 """
 
+minidata = "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"
+
 
 class AoCTest(unittest.TestCase):
 
@@ -25,11 +27,14 @@ class AoCTest(unittest.TestCase):
         second_step = toggle_by_mask(first_step, all_bits, 55)
         self.assertEqual(0, second_step)
 
+    def test_minidata(self):
+        self.assertEqual(2, day10.part1(minidata))
+
     def test_part1(self):
         self.assertEqual(7, day10.part1(test_data))
 
     def test_part2(self):
-        self.assertEqual(0, day10.part2(test_data))
+        self.assertEqual(33, day10.part2(test_data))
 
 
 if __name__ == '__main__':

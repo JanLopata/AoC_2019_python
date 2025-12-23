@@ -48,7 +48,7 @@ def find_target_by_applying_masks(starting_position, all_ons, masks):
     work_queue = [(starting_position, [])]
 
     while len(work_queue) > 0:
-        head = work_queue.pop()
+        head = work_queue.pop(0)
         indicators = head[0]
         if indicators == 0:
             print(head)
@@ -65,12 +65,6 @@ def find_target_by_applying_masks(starting_position, all_ons, masks):
             progress.append(mask)
 
             work_queue.append((toggle_result, progress))
-
-
-
-
-
-
 
 
 def part1(data: str):
