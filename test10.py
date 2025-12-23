@@ -1,7 +1,7 @@
 import unittest
 
 import day10
-from day10 import toggle_by_mask
+from day10 import toggle_by_mask, increment_by_mask
 
 test_data = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
@@ -17,8 +17,8 @@ class AoCTest(unittest.TestCase):
         self.assertEqual(2 ** 3 + 2 ** 4, toggle_by_mask(1, 63, 2 ** 0 + 2 ** 3 + 2 ** 4))
 
     def test_first_example(self):
-        first_step = toggle_by_mask(6, 15, 2**0 + 2**2)
-        second_step = toggle_by_mask(first_step, 15, 2**0 + 2**1)
+        first_step = toggle_by_mask(6, 15, 2 ** 0 + 2 ** 2)
+        second_step = toggle_by_mask(first_step, 15, 2 ** 0 + 2 ** 1)
         self.assertEqual(0, second_step)
 
     def test_third_example(self):
@@ -26,6 +26,19 @@ class AoCTest(unittest.TestCase):
         first_step = toggle_by_mask(46, all_bits, 25)
         second_step = toggle_by_mask(first_step, all_bits, 55)
         self.assertEqual(0, second_step)
+
+    def test_first_example_part2(self):
+        start = [0, 0, 0, 0]
+        val = increment_by_mask(start, 2 ** 3)
+        for i in range(3):
+            val = increment_by_mask(val, 2 ** 1 + 2 ** 3)
+        for i in range(3):
+            val = increment_by_mask(val, 2 ** 2 + 2 ** 3)
+        val = increment_by_mask(val, 2 ** 0 + 2 ** 2)
+        for i in range(2):
+            val = increment_by_mask(val, 2 ** 0 + 2 ** 1)
+
+        self.assertEqual([3, 5, 4, 7], val)
 
     def test_minidata(self):
         self.assertEqual(2, day10.part1(minidata))
