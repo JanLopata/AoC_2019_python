@@ -1,6 +1,7 @@
 import unittest
 
 import day10
+from day10 import toggle_by_mask
 
 test_data = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
@@ -11,7 +12,12 @@ test_data = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 class AoCTest(unittest.TestCase):
 
     def test_apply_switch(self):
-        self.assertEqual(2 ** 3 + 2 ** 4, day10.switch_by_mask(1, 63, 2 ** 0 + 2 ** 3 + 2 ** 4))
+        self.assertEqual(2 ** 3 + 2 ** 4, toggle_by_mask(1, 63, 2 ** 0 + 2 ** 3 + 2 ** 4))
+
+    def test_two_steps(self):
+        first_step = toggle_by_mask(6, 15, 2**0 + 2**2)
+        second_step = toggle_by_mask(first_step, 15, 2**0 + 2**1)
+        self.assertEqual(0, second_step)
 
     def test_part1(self):
         self.assertEqual(7, day10.part1(test_data))

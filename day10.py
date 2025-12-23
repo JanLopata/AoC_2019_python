@@ -36,18 +36,22 @@ def parse_line(line):
     return indicators, target_indicators, buttons, None
 
 
-def switch_by_mask(indicators, all_bits_on, mask):
-    to_be_switched = indicators & mask
-    without_masked = indicators - to_be_switched
-    switched = (to_be_switched ^ all_bits_on) & mask
-    return without_masked + switched
+def toggle_by_mask(indicators, all_bits_on, mask):
+    to_be_toggled = indicators & mask
+    without_masked = indicators - to_be_toggled
+    toggled = (to_be_toggled ^ all_bits_on) & mask
+    return without_masked + toggled
 
 
 def find_target_by_applying_masks(indicators, target, masks):
     work_queue = []
     for mask in masks:
-        switch_result = switch_by_mask(indicators, target, mask)
-        work_queue.append([indicators, switch_result])
+        switch_result = toggle_by_mask(indicators, target, mask)
+        work_queue.append(([indicators, switch_result], mask))
+        print(work_queue[-1])
+
+    # while len(work_queue) > 0:
+
 
 
 
