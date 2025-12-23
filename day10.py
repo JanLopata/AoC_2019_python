@@ -5,12 +5,15 @@ from aoc_tools import get_data
 
 def indicators_to_number(indicators_str: str):
     result = 0
+    target = 0
     revers = indicators_str[::-1]
     for c in revers:
         result *= 2
+        target *= 2
+        target += 1
         if c == "#":
             result += 1
-    return result
+    return result, target
 
 
 def mask_indices_to_number(mask_indices: list[str]):
@@ -23,20 +26,37 @@ def mask_indices_to_number(mask_indices: list[str]):
 
 def parse_line(line):
     sp = line.split()
-    indicators = indicators_to_number(sp[0][1:-1])
+    indicators, target_indicators = indicators_to_number(sp[0][1:-1])
     buttons = []
     for button_source in sp[1:-1]:
         mask_indices = button_source[1:-1].split(",")
         mask = mask_indices_to_number(mask_indices)
         buttons.append(mask)
 
-    return indicators, buttons, None
+    return indicators, target_indicators, buttons, None
+
+
+def switch_by_mask(indicators, all_bits_on, mask):
+    to_be_switched = indicators & mask
+    without_masked = indicators - to_be_switched
+    switched = (to_be_switched ^ all_bits_on) & mask
+    return without_masked + switched
+
+
+def find_target_by_applying_masks(indicators, target, masks):
+    work_queue = []
+    for mask in masks:
+        switch_result = switch_by_mask(indicators, target, mask)
+        work_queue.append([indicators, switch_result])
+
+
 
 
 def part1(data: str):
     for line in data.splitlines():
-        indicators, wiring, _ = parse_line(line)
-        print(indicators, wiring)
+        indicators, target, wiring, _ = parse_line(line)
+        print(indicators, target, wiring)
+        find_target_by_applying_masks(indicators, target, wiring)
 
     return 0
 

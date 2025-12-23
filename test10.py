@@ -10,6 +10,9 @@ test_data = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 
 class AoCTest(unittest.TestCase):
 
+    def test_apply_switch(self):
+        self.assertEqual(2 ** 3 + 2 ** 4, day10.switch_by_mask(1, 63, 2 ** 0 + 2 ** 3 + 2 ** 4))
+
     def test_part1(self):
         self.assertEqual(7, day10.part1(test_data))
 
