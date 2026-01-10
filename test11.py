@@ -14,6 +14,21 @@ hhh: ccc fff iii
 iii: out
 """
 
+test_data_2 = """svr: aaa bbb
+aaa: fft
+fft: ccc
+bbb: tty
+tty: ccc
+ccc: ddd eee
+ddd: hub
+hub: fff
+eee: dac
+dac: fff
+fff: ggg hhh
+ggg: out
+hhh: out
+"""
+
 
 class AoCTest(unittest.TestCase):
 
@@ -21,7 +36,7 @@ class AoCTest(unittest.TestCase):
         self.assertEqual(5, day11.part1(test_data))
 
     def test_part2(self):
-        self.assertEqual(33, day11.part2(test_data))
+        self.assertEqual(2, day11.part2(test_data_2))
 
 
 if __name__ == '__main__':
